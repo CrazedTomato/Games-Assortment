@@ -8,7 +8,7 @@ import javax.swing.JPanel;
 public class RubiksCube extends JPanel {
 
 	public void RubiksCube() {
-		repaint();
+		repaint();//
 	}
 	
 	public void paintComponent(Graphics g) {
