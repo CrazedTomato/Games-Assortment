@@ -95,7 +95,7 @@ public class Main {
 				game.add(new Sudoku());
 				break;
 			case 1:
-				game.setSize(639, 534);
+				game.setSize(637, 534);
 				game.setLocationRelativeTo(menu);
 				game.setLocation((menu.getX()+menu.getWidth()/2)-game.getWidth()/2, (menu.getY()+menu.getHeight()/2)-game.getHeight()/2);
 				game.add(new RubiksCube());

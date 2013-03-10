@@ -7,8 +7,17 @@ import javax.swing.JButton;
 
 public class CButton extends JButton {
 	
-	public List<Integer> intVal = new ArrayList<Integer>();
-	public List<String>  intVar = new ArrayList<String>();
+	private List<Integer> intVal = new ArrayList<Integer>();
+	private List<String>  intVar = new ArrayList<String>();
+	
+	public CButton() {
+		//Overloaded constructor with no text
+	}
+	
+	public CButton(String title) {
+		//Overloaded constructor with text
+		setText(title);
+	}
 	
 	public void setInt(String var, int val) {
 		intVar.add(var);
