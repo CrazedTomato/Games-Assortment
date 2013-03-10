@@ -18,6 +18,12 @@ public class RubiksCube extends JPanel {
 		
 	}
 	
+	public void createGrids() {
+		
+		
+		
+	}
+	
 	public void showButtons() {
 		
 		setLayout(null);
