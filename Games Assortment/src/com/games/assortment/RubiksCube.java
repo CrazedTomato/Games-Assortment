@@ -7,7 +7,9 @@ import javax.swing.JPanel;
 
 public class RubiksCube extends JPanel {
 
-	
+	public void RubiksCube() {
+		
+	}
 	
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
