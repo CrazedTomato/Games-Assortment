@@ -13,7 +13,7 @@ import javax.swing.JFrame;
 public class Main {
 	
 	private static JFrame menu;
-	private static JFrame game;
+	public  static JFrame game;
 	private static String[] game_type = {"Sudoku", "Rubik's Cube", "New Game", "New Game",
 										 "New Game", "New Game", "New Game", "New Game",
 										 "New Game", "New Game", "New Game", "New Game"};
