@@ -265,6 +265,27 @@ public class CPaintList extends JComponent {
 		
 	}
 	
+	public Color getColor(String id) {
+		
+		int red   = 0;
+		int green = 0;
+		int blue  = 0;
+		
+		for(int i=0;i<list.size();i++) {
+			if(identity.get(i).equals(id)) {
+				
+				red   = list.get(i)[5];
+				green = list.get(i)[6];
+				blue  = list.get(i)[7];
+				
+			}
+		}
+		
+		Color color = new Color(red, green, blue);
+		return color;
+		
+	}
+	
 	/**
 	 * Use this method inside your paint method to display the CPaintList.
 	 */
