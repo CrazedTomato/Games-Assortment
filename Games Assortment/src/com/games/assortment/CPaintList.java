@@ -211,65 +211,26 @@ public class CPaintList extends JComponent {
 		
 	}
 	
-	/**
-	 * Edit the color of a specific item within an already created PaintList.
-	 * 
-	 * @param id     - The identifier of the item (String)
-	 * @param color  - The new color of the item (String)
-	 */
-	public void editColor(String id, Color color) {
+	public int getIdAmount(String id) {
 		
-		int red   = color.getRed();
-		int green = color.getGreen();
-		int blue  = color.getBlue();
+		int amount = 0;
 		
 		for(int i=0;i<list.size();i++) {
-			if(identity.get(i).equals(id)) {
-				
-				attrib = new int[8];
-				attrib[0] = list.get(i)[0];
-				attrib[1] = list.get(i)[1];
-				attrib[2] = list.get(i)[2];
-				attrib[3] = list.get(i)[3];
-				attrib[4] = list.get(i)[4];
-				attrib[5] = red;
-				attrib[6] = green;
-				attrib[7] = blue;
-				list.set(i, attrib);
-				
+			if(identity.get(i).contains(id)) {
+				amount++;
 			}
 		}
 		
-	}
-	
-	public void setColor(Color color) {
-		
-		int red   = color.getRed();
-		int green = color.getGreen();
-		int blue  = color.getBlue();
-		
-		for(int i=0;i<list.size();i++) {
-				
-				attrib = new int[8];
-				attrib[0] = list.get(i)[0];
-				attrib[1] = list.get(i)[1];
-				attrib[2] = list.get(i)[2];
-				attrib[3] = list.get(i)[3];
-				attrib[4] = list.get(i)[4];
-				attrib[5] = red;
-				attrib[6] = green;
-				attrib[7] = blue;
-				list.set(i, attrib);
-				
-		}
+		return amount;
 		
 	}
 	
 	public Color getColor(String id) {
 		
-		int red   = 0;
-		int green = 0;
-		int blue  = 0;
+		int   red   = 0;
+		int   green = 0;
+		int   blue  = 0;
+		Color color;
 		
 		for(int i=0;i<list.size();i++) {
 			if(identity.get(i).equals(id)) {
@@ -281,8 +242,149 @@ public class CPaintList extends JComponent {
 			}
 		}
 		
-		Color color = new Color(red, green, blue);
+		color = new Color(red, green, blue);
 		return color;
+		
+	}
+	
+	public Color[] getColorArray(String id) {
+		
+		List<Color> color_list  = new ArrayList<Color>();
+		Color[]     color_array;
+		
+		int   red   = 0;
+		int   green = 0;
+		int   blue  = 0;
+		Color color;
+		
+		for(int i=0;i<list.size();i++) {
+			if(identity.get(i).contains(id)) {
+				
+				red   = list.get(i)[5];
+				green = list.get(i)[6];
+				blue  = list.get(i)[7];
+				
+				color = new Color(red, green, blue);
+				color_list.add(color);
+				
+			}
+		}
+		
+		color_array = color_list.toArray(new Color[color_list.size()]);		
+		return color_array;
+		
+	}
+	
+	public void setColor(Color color) {
+		
+		int red   = color.getRed();
+		int green = color.getGreen();
+		int blue  = color.getBlue();
+		
+		for(int i=0;i<list.size();i++) {
+				
+			attrib = new int[8];
+			attrib[0] = list.get(i)[0];
+			attrib[1] = list.get(i)[1];
+			attrib[2] = list.get(i)[2];
+			attrib[3] = list.get(i)[3];
+			attrib[4] = list.get(i)[4];
+			attrib[5] = red;
+			attrib[6] = green;
+			attrib[7] = blue;
+			list.set(i, attrib);
+				
+		}
+		
+	}
+	
+	public void setColor(String id, Color color) {
+		
+		int red   = color.getRed();
+		int green = color.getGreen();
+		int blue  = color.getBlue();
+		
+		for(int i=0;i<list.size();i++) {
+			if(identity.get(i).contains(id)) {
+			
+				attrib = new int[8];
+				attrib[0] = list.get(i)[0];
+				attrib[1] = list.get(i)[1];
+				attrib[2] = list.get(i)[2];
+				attrib[3] = list.get(i)[3];
+				attrib[4] = list.get(i)[4];
+				attrib[5] = red;
+				attrib[6] = green;
+				attrib[7] = blue;
+				list.set(i, attrib);
+				
+			}				
+		}
+		
+	}
+
+	public void setColor(String[] id, Color color) {
+		
+		int red   = color.getRed();
+		int green = color.getGreen();
+		int blue  = color.getBlue();
+		int count = 0;
+		
+		for(int i=0;i<list.size();i++) {
+			if(count >= id.length){break;} 
+			if(identity.get(i).contains(id[count])) {
+			
+				attrib = new int[8];
+				attrib[0] = list.get(i)[0];
+				attrib[1] = list.get(i)[1];
+				attrib[2] = list.get(i)[2];
+				attrib[3] = list.get(i)[3];
+				attrib[4] = list.get(i)[4];
+				attrib[5] = red;
+				attrib[6] = green;
+				attrib[7] = blue;
+				
+				list.set(i, attrib);
+				count++;
+				
+			}				
+		}
+		
+	}
+	
+	public void setColorArray(String id, Color[] color) {
+		
+		int red[]   = new int[color.length];
+		int green[] = new int[color.length];
+		int blue[]  = new int[color.length];
+		int count   = 0;
+		
+		for(int i=0;i<color.length;i++) {
+			
+			red[i]   = color[i].getRed();
+			green[i] = color[i].getGreen();
+			blue[i]  = color[i].getBlue();
+			
+		}
+		
+		for(int i=0;i<list.size();i++) {
+			if(identity.get(i).contains(id)) {
+			
+				attrib = new int[8];
+				attrib[0] = list.get(i)[0];
+				attrib[1] = list.get(i)[1];
+				attrib[2] = list.get(i)[2];
+				attrib[3] = list.get(i)[3];
+				attrib[4] = list.get(i)[4];
+				attrib[5] = red[count];
+				attrib[6] = green[count];
+				attrib[7] = blue[count];
+				
+				list.set(i, attrib);
+				count++;
+				
+			}				
+		}
 		
 	}
 	
