@@ -12,15 +12,13 @@ import javax.swing.Timer;
 
 public class RubiksCube extends JPanel {
 	
-	private String     dir              = "";
-	private String     difficulty[]     = {"Solved", "Easy", "Medium", "Hard", "Superflip"};
-	
+	private String     dir              = "";	
 	private String     grid_lines[][][] = { { {"1:1" , "2:1" , "2:2"},                 {"1:1" , "1:2" , "2:2" , "2:3" , "2:4"},                         {"1:2" , "2:4" , "2:5"} },                 //First Row
 			                              {   {"2:1" , "2:2" , "3:1" , "4:1" , "4:2"}, {"2:2" , "2:3" , "2:4" , "3:1" , "3:2" , "4:2" , "4:3" , "4:4"}, {"2:4" , "2:5" , "3:2" , "4:4" , "4:5"} }, //Second Row
 			                              {   {"4:1" , "4:2" , "5:1"},                 {"4:2" , "4:3" , "4:4" , "5:1" , "5:2"},                         {"4:4" , "4:5" , "5:2"} } };               //Third Row
 	                                                                                                                                                     
-	private int        diff_no          = 2;
 	private int        move             = 0;
+	private int        front            = 0;
 	private int        grid[][]         = { {-1, -1}, {-1, -1}, {-1, -1} };
 	
 	private int        valid_moves[][]  = { {1,1 , 1,2 , 1,3}, {2,1 , 2,2 , 2,3}, {3,1 , 3,2 , 3,3}, //Right
@@ -32,19 +30,30 @@ public class RubiksCube extends JPanel {
 											{1,2 , 1,3 , 2,3}, {2,3 , 3,3 , 3,2}, {3,2 , 3,1 , 2,1}, {2,1 , 1,1 , 1,2},   //Rotate Clockwise
 											{1,2 , 1,1 , 2,1}, {2,1 , 3,1 , 3,2}, {3,2 , 3,3 , 2,3}, {2,3 , 1,3 , 1,2} }; //Rotate Anti-Clockwise
 	
-	private Color      bg_color         = new Color(51 , 51 , 51 );
-	private Color      selected_color   = new Color(0  , 130, 255);
-	private Color      correct_color    = new Color(0  , 130, 25 );
-	private Color      incorrect_color  = new Color(240, 20 , 20 );
-	private Color      red_color        = new Color(170, 0  , 0  );
-	private Color      green_color      = new Color(0  , 170, 0  );
-	private Color      blue_color       = new Color(70 , 100, 150);
-	private Color      yellow_color     = new Color(250, 230, 0  );
-	private Color      orange_color     = new Color(250, 130, 50 );
-	private Color      white_color      = new Color(235, 235, 235);
+	private int        superflip[][]    = { {1, 5, 1, 4, 1, 2, 1, 6, 1}, //Front
+											{2, 5, 2, 1, 2, 3, 2, 6, 2}, //Right
+											{3, 5, 3, 2, 3, 4, 3, 6, 3}, //Back
+											{4, 5, 4, 3, 4, 1, 4, 6, 4}, //Left
+											{5, 3, 5, 4, 5, 2, 5, 1, 5}, //Up
+											{6, 1, 6, 4, 6, 2, 6, 3, 6}  /*Down*/ };
 	
-	private CButton    new_cube;
-	private CButton    diff;
+	private Color      color_bg         = new Color(51 , 51 , 51 );
+	private Color      color_selected   = new Color(0  , 130, 255);
+	private Color      color_correct    = new Color(0  , 130, 25 );
+	private Color      color_incorrect  = new Color(240, 20 , 20 );
+	private Color      color_red        = new Color(170, 0  , 0  );
+	private Color      color_green      = new Color(0  , 170, 0  );
+	private Color      color_blue       = new Color(70 , 100, 150);
+	private Color      color_yellow     = new Color(250, 230, 0  );
+	private Color      color_orange     = new Color(250, 130, 50 );
+	private Color      color_white      = new Color(235, 235, 235);
+	
+	private CButton    btn_solve;
+	private CButton    btn_tutorial;
+	private CButton    btn_shuffle;
+	private CButton    btn_superflip;
+	private CButton    btn_front;
+	private CButton    btn_gofront;
 	
 	private CPaintList main_grid;
 	private CPaintList sub_grids;
@@ -91,59 +100,59 @@ public class RubiksCube extends JPanel {
 	public void createGrids() {
 		
 		main_grid = new CPaintList();
-		main_grid.add("1:1", 216, 152, 5, 64, "rectangle", bg_color); //First Row
-		main_grid.add("1:2", 285, 152, 5, 64, "rectangle", bg_color); //First Row
-		                                                 
-		main_grid.add("2:1", 152, 216, 64, 5, "rectangle", bg_color); //Second Row
-		main_grid.add("2:2", 216, 216, 5, 5, "rectangle", bg_color);  //Second Row
-		main_grid.add("2:3", 221, 216, 64, 5, "rectangle", bg_color); //Second Row
-		main_grid.add("2:4", 285, 216, 5, 5, "rectangle", bg_color);  //Second Row
-		main_grid.add("2:5", 290, 216, 64, 5, "rectangle", bg_color); //Second Row
-		                                                 
-		main_grid.add("3:1", 216, 221, 5, 64, "rectangle", bg_color); //Third Row
-		main_grid.add("3:2", 285, 221, 5, 64, "rectangle", bg_color); //Third Row
-		                                                
-		main_grid.add("4:1", 152, 285, 64, 5, "rectangle", bg_color); //Fourth Row
-		main_grid.add("4:2", 216, 285, 5, 5, "rectangle", bg_color);  //Fourth Row
-		main_grid.add("4:3", 221, 285, 64, 5, "rectangle", bg_color); //Fourth Row
-		main_grid.add("4:4", 285, 285, 5, 5, "rectangle", bg_color);  //Fourth Row
-		main_grid.add("4:5", 290, 285, 64, 5, "rectangle", bg_color); //Fourth Row
-		                                                 
-		main_grid.add("5:1", 216, 290, 5, 64, "rectangle", bg_color); //Fifth Row
-		main_grid.add("5:2", 285, 290, 5, 64, "rectangle", bg_color); //Fifth Row
+		main_grid.add("1:1", 216, 152, 5, 64, "rectangle", color_bg); //First Row
+		main_grid.add("1:2", 285, 152, 5, 64, "rectangle", color_bg); //First Row
+		                                                  
+		main_grid.add("2:1", 152, 216, 64, 5, "rectangle", color_bg); //Second Row
+		main_grid.add("2:2", 216, 216, 5, 5, "rectangle", color_bg);  //Second Row
+		main_grid.add("2:3", 221, 216, 64, 5, "rectangle", color_bg); //Second Row
+		main_grid.add("2:4", 285, 216, 5, 5, "rectangle", color_bg);  //Second Row
+		main_grid.add("2:5", 290, 216, 64, 5, "rectangle", color_bg); //Second Row
+		                                                   
+		main_grid.add("3:1", 216, 221, 5, 64, "rectangle", color_bg); //Third Row
+		main_grid.add("3:2", 285, 221, 5, 64, "rectangle", color_bg); //Third Row
+		                                                   
+		main_grid.add("4:1", 152, 285, 64, 5, "rectangle", color_bg); //Fourth Row
+		main_grid.add("4:2", 216, 285, 5, 5, "rectangle", color_bg);  //Fourth Row
+		main_grid.add("4:3", 221, 285, 64, 5, "rectangle", color_bg); //Fourth Row
+		main_grid.add("4:4", 285, 285, 5, 5, "rectangle", color_bg);  //Fourth Row
+		main_grid.add("4:5", 290, 285, 64, 5, "rectangle", color_bg); //Fourth Row
+		                                                   
+		main_grid.add("5:1", 216, 290, 5, 64, "rectangle", color_bg); //Fifth Row
+		main_grid.add("5:2", 285, 290, 5, 64, "rectangle", color_bg); //Fifth Row
 		
 		//Sub grids
 		sub_grids = new CPaintList();
 		
 		//Right face
-		sub_grids.add("R:hor1", 379, 234, 102, 3, "rectangle", bg_color);
-		sub_grids.add("R:hor2", 379, 269, 102, 3, "rectangle", bg_color);
-		sub_grids.add("R:ver1", 411, 202, 3, 102, "rectangle", bg_color);
-		sub_grids.add("R:ver2", 446, 202, 3, 102, "rectangle", bg_color);
-		
-		//Back face
-		sub_grids.add("B:hor1", 506, 234, 102, 3, "rectangle", bg_color);
-		sub_grids.add("B:hor2", 506, 269, 102, 3, "rectangle", bg_color);
-		sub_grids.add("B:ver1", 538, 202, 3, 102, "rectangle", bg_color);
-		sub_grids.add("B:ver2", 573, 202, 3, 102, "rectangle", bg_color);
+		sub_grids.add("R:hor1", 379, 234, 102, 3, "rectangle", color_bg);
+		sub_grids.add("R:hor2", 379, 269, 102, 3, "rectangle", color_bg);
+		sub_grids.add("R:ver1", 411, 202, 3, 102, "rectangle", color_bg);
+		sub_grids.add("R:ver2", 446, 202, 3, 102, "rectangle", color_bg);
+		                                                       
+		//Back face                                            
+		sub_grids.add("B:hor1", 506, 234, 102, 3, "rectangle", color_bg);
+		sub_grids.add("B:hor2", 506, 269, 102, 3, "rectangle", color_bg);
+		sub_grids.add("B:ver1", 538, 202, 3, 102, "rectangle", color_bg);
+		sub_grids.add("B:ver2", 573, 202, 3, 102, "rectangle", color_bg);
 		
 		//Left face
-		sub_grids.add("L:hor1", 25, 234, 102, 3, "rectangle", bg_color);
-		sub_grids.add("L:hor2", 25, 269, 102, 3, "rectangle", bg_color);
-		sub_grids.add("L:ver1", 57, 202, 3, 102, "rectangle", bg_color);
-		sub_grids.add("L:ver2", 92, 202, 3, 102, "rectangle", bg_color);
-		
-		//Up face
-		sub_grids.add("U:hor1", 202, 57, 102, 3, "rectangle", bg_color);
-		sub_grids.add("U:hor2", 202, 92, 102, 3, "rectangle", bg_color);
-		sub_grids.add("U:ver1", 234, 25, 3, 102, "rectangle", bg_color);
-		sub_grids.add("U:ver2", 269, 25, 3, 102, "rectangle", bg_color);
+		sub_grids.add("L:hor1", 25, 234, 102, 3, "rectangle", color_bg);
+		sub_grids.add("L:hor2", 25, 269, 102, 3, "rectangle", color_bg);
+		sub_grids.add("L:ver1", 57, 202, 3, 102, "rectangle", color_bg);
+		sub_grids.add("L:ver2", 92, 202, 3, 102, "rectangle", color_bg);
+		                                                     
+		//Up face                                            
+		sub_grids.add("U:hor1", 202, 57, 102, 3, "rectangle", color_bg);
+		sub_grids.add("U:hor2", 202, 92, 102, 3, "rectangle", color_bg);
+		sub_grids.add("U:ver1", 234, 25, 3, 102, "rectangle", color_bg);
+		sub_grids.add("U:ver2", 269, 25, 3, 102, "rectangle", color_bg);
 		
 		//Down face
-		sub_grids.add("D:hor1", 202, 411, 102, 3, "rectangle", bg_color);
-		sub_grids.add("D:hor2", 202, 446, 102, 3, "rectangle", bg_color);
-		sub_grids.add("D:ver1", 234, 379, 3, 102, "rectangle", bg_color);
-		sub_grids.add("D:ver2", 269, 379, 3, 102, "rectangle", bg_color);
+		sub_grids.add("D:hor1", 202, 411, 102, 3, "rectangle", color_bg);
+		sub_grids.add("D:hor2", 202, 446, 102, 3, "rectangle", color_bg);
+		sub_grids.add("D:ver1", 234, 379, 3, 102, "rectangle", color_bg);
+		sub_grids.add("D:ver2", 269, 379, 3, 102, "rectangle", color_bg);
 		
 		
 	}
@@ -153,70 +162,70 @@ public class RubiksCube extends JPanel {
 		rubiks = new CPaintList();
 		
 		//Front face
-		rubiks.add("F:1:1", 152, 152, 64, 64, "rectangle", red_color);
-		rubiks.add("F:1:2", 221, 152, 64, 64, "rectangle", red_color);
-		rubiks.add("F:1:3", 290, 152, 64, 64, "rectangle", red_color);
-		rubiks.add("F:2:1", 152, 221, 64, 64, "rectangle", red_color);
-		rubiks.add("F:2:2", 221, 221, 64, 64, "rectangle", red_color);
-		rubiks.add("F:2:3", 290, 221, 64, 64, "rectangle", red_color);
-		rubiks.add("F:3:1", 152, 290, 64, 64, "rectangle", red_color);
-		rubiks.add("F:3:2", 221, 290, 64, 64, "rectangle", red_color);
-		rubiks.add("F:3:3", 290, 290, 64, 64, "rectangle", red_color);
+		rubiks.add("F:1:1", 152, 152, 64, 64, "rectangle", color_red);
+		rubiks.add("F:1:2", 221, 152, 64, 64, "rectangle", color_red);
+		rubiks.add("F:1:3", 290, 152, 64, 64, "rectangle", color_red);
+		rubiks.add("F:2:1", 152, 221, 64, 64, "rectangle", color_red);
+		rubiks.add("F:2:2", 221, 221, 64, 64, "rectangle", color_red);
+		rubiks.add("F:2:3", 290, 221, 64, 64, "rectangle", color_red);
+		rubiks.add("F:3:1", 152, 290, 64, 64, "rectangle", color_red);
+		rubiks.add("F:3:2", 221, 290, 64, 64, "rectangle", color_red);
+		rubiks.add("F:3:3", 290, 290, 64, 64, "rectangle", color_red);
 		
 		//Right face
-		rubiks.add("R:1:1", 379, 202, 32, 32, "rectangle", green_color);
-		rubiks.add("R:1:2", 414, 202, 32, 32, "rectangle", green_color);
-		rubiks.add("R:1:3", 449, 202, 32, 32, "rectangle", green_color);
-		rubiks.add("R:2:1", 379, 237, 32, 32, "rectangle", green_color);
-		rubiks.add("R:2:2", 414, 237, 32, 32, "rectangle", green_color);
-		rubiks.add("R:2:3", 449, 237, 32, 32, "rectangle", green_color);
-		rubiks.add("R:3:1", 379, 272, 32, 32, "rectangle", green_color);
-		rubiks.add("R:3:2", 414, 272, 32, 32, "rectangle", green_color);
-		rubiks.add("R:3:3", 449, 272, 32, 32, "rectangle", green_color);
+		rubiks.add("R:1:1", 379, 202, 32, 32, "rectangle", color_green);
+		rubiks.add("R:1:2", 414, 202, 32, 32, "rectangle", color_green);
+		rubiks.add("R:1:3", 449, 202, 32, 32, "rectangle", color_green);
+		rubiks.add("R:2:1", 379, 237, 32, 32, "rectangle", color_green);
+		rubiks.add("R:2:2", 414, 237, 32, 32, "rectangle", color_green);
+		rubiks.add("R:2:3", 449, 237, 32, 32, "rectangle", color_green);
+		rubiks.add("R:3:1", 379, 272, 32, 32, "rectangle", color_green);
+		rubiks.add("R:3:2", 414, 272, 32, 32, "rectangle", color_green);
+		rubiks.add("R:3:3", 449, 272, 32, 32, "rectangle", color_green);
 		                              
 		//Back face                   
-		rubiks.add("B:1:1", 506, 202, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:1:2", 541, 202, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:1:3", 576, 202, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:2:1", 506, 237, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:2:2", 541, 237, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:2:3", 576, 237, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:3:1", 506, 272, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:3:2", 541, 272, 32, 32, "rectangle", orange_color);
-		rubiks.add("B:3:3", 576, 272, 32, 32, "rectangle", orange_color);
+		rubiks.add("B:1:1", 506, 202, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:1:2", 541, 202, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:1:3", 576, 202, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:2:1", 506, 237, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:2:2", 541, 237, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:2:3", 576, 237, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:3:1", 506, 272, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:3:2", 541, 272, 32, 32, "rectangle", color_orange);
+		rubiks.add("B:3:3", 576, 272, 32, 32, "rectangle", color_orange);
 		                            
 		//Left face                 
-		rubiks.add("L:1:1", 25, 202, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:1:2", 60, 202, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:1:3", 95, 202, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:2:1", 25, 237, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:2:2", 60, 237, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:2:3", 95, 237, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:3:1", 25, 272, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:3:2", 60, 272, 32, 32, "rectangle", blue_color);
-		rubiks.add("L:3:3", 95, 272, 32, 32, "rectangle", blue_color);
+		rubiks.add("L:1:1", 25, 202, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:1:2", 60, 202, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:1:3", 95, 202, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:2:1", 25, 237, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:2:2", 60, 237, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:2:3", 95, 237, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:3:1", 25, 272, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:3:2", 60, 272, 32, 32, "rectangle", color_blue);
+		rubiks.add("L:3:3", 95, 272, 32, 32, "rectangle", color_blue);
 		                             
 		//Up face                    
-		rubiks.add("U:1:1", 202, 25, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:1:2", 237, 25, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:1:3", 272, 25, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:2:1", 202, 60, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:2:2", 237, 60, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:2:3", 272, 60, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:3:1", 202, 95, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:3:2", 237, 95, 32, 32, "rectangle", yellow_color);
-		rubiks.add("U:3:3", 272, 95, 32, 32, "rectangle", yellow_color);
+		rubiks.add("U:1:1", 202, 25, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:1:2", 237, 25, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:1:3", 272, 25, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:2:1", 202, 60, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:2:2", 237, 60, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:2:3", 272, 60, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:3:1", 202, 95, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:3:2", 237, 95, 32, 32, "rectangle", color_yellow);
+		rubiks.add("U:3:3", 272, 95, 32, 32, "rectangle", color_yellow);
 		                              
 		//Down face                   
-		rubiks.add("D:1:1", 202, 379, 32, 32, "rectangle", white_color);
-		rubiks.add("D:1:2", 237, 379, 32, 32, "rectangle", white_color);
-		rubiks.add("D:1:3", 272, 379, 32, 32, "rectangle", white_color);
-		rubiks.add("D:2:1", 202, 414, 32, 32, "rectangle", white_color);
-		rubiks.add("D:2:2", 237, 414, 32, 32, "rectangle", white_color);
-		rubiks.add("D:2:3", 272, 414, 32, 32, "rectangle", white_color);
-		rubiks.add("D:3:1", 202, 449, 32, 32, "rectangle", white_color);
-		rubiks.add("D:3:2", 237, 449, 32, 32, "rectangle", white_color);
-		rubiks.add("D:3:3", 272, 449, 32, 32, "rectangle", white_color);
+		rubiks.add("D:1:1", 202, 379, 32, 32, "rectangle", color_white);
+		rubiks.add("D:1:2", 237, 379, 32, 32, "rectangle", color_white);
+		rubiks.add("D:1:3", 272, 379, 32, 32, "rectangle", color_white);
+		rubiks.add("D:2:1", 202, 414, 32, 32, "rectangle", color_white);
+		rubiks.add("D:2:2", 237, 414, 32, 32, "rectangle", color_white);
+		rubiks.add("D:2:3", 272, 414, 32, 32, "rectangle", color_white);
+		rubiks.add("D:3:1", 202, 449, 32, 32, "rectangle", color_white);
+		rubiks.add("D:3:2", 237, 449, 32, 32, "rectangle", color_white);
+		rubiks.add("D:3:3", 272, 449, 32, 32, "rectangle", color_white);
 		
 	}
 	
@@ -224,14 +233,46 @@ public class RubiksCube extends JPanel {
 		
 		setLayout(null);
 		
-		new_cube = new CButton("New Cube");
-		new_cube.setBounds(377, 398, 128, 32);
+		btn_solve = new CButton("Solve");
+		btn_solve.setBounds(377, 377, 114, 34);
 		
-		diff = new CButton(difficulty[diff_no]);
-		diff.setBounds(377, 430, 128, 32);
+		btn_tutorial = new CButton("Feature");
+		btn_tutorial.setBounds(492, 377, 114, 34);
 		
-		add(new_cube);
-		add(diff);
+		btn_shuffle = new CButton("Shuffle");
+		btn_shuffle.setBounds(377, 411, 114, 34);
+		
+		btn_superflip = new CButton("Superflip");
+		btn_superflip.setBounds(492, 411, 114, 34);
+		btn_superflip.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setSuperflippedState();
+			}
+			
+		});
+		
+		btn_front = new CButton("Set Front");
+		btn_front.setBounds(377, 445, 114, 34);
+		btn_front.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setAsFront();
+			}
+			
+		});
+		
+		btn_gofront = new CButton("Go To Front");
+		btn_gofront.setBounds(492, 445, 114, 34);
+		
+		add(btn_solve);
+		add(btn_tutorial);
+		add(btn_shuffle);
+		add(btn_superflip);
+		add(btn_front);
+		add(btn_gofront);
 		
 	}
 	
@@ -239,7 +280,7 @@ public class RubiksCube extends JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
-		setBackground(bg_color);
+		setBackground(color_bg);
 		
 		main_grid.paintList(g);
 		sub_grids.paintList(g);
@@ -261,7 +302,7 @@ public class RubiksCube extends JPanel {
 				if(!(grid[0][0] == valid_moves[i][0] && grid[0][1] == valid_moves[i][1])) {
 					reset = true;
 				} else {
-					main_grid.setColor(grid_lines[row-1][col-1], selected_color);
+					main_grid.setColor(grid_lines[row-1][col-1], color_selected);
 					reset = false;
 					break;
 				}
@@ -279,7 +320,7 @@ public class RubiksCube extends JPanel {
 							reset = true;
 						} else {
 							move = i+1;
-							main_grid.setColor(grid_lines[row-1][col-1], selected_color);
+							main_grid.setColor(grid_lines[row-1][col-1], color_selected);
 							reset = false;
 							break;
 						}
@@ -296,7 +337,7 @@ public class RubiksCube extends JPanel {
 					if(!(grid[2][0] == valid_moves[move-1][4] && grid[2][1] == valid_moves[move-1][5])) {
 						reset = true;
 					} else {
-						main_grid.setColor(grid_lines[row-1][col-1], selected_color);
+						main_grid.setColor(grid_lines[row-1][col-1], color_selected);
 					}
 				
 				} else {reset = true;}
@@ -305,9 +346,9 @@ public class RubiksCube extends JPanel {
 		
 		if(reset) {
 			
-			if(grid[0][0] != -1) {main_grid.setColor(grid_lines[grid[0][0]-1][grid[0][1]-1], incorrect_color);}
-			if(grid[1][0] != -1) {main_grid.setColor(grid_lines[grid[1][0]-1][grid[1][1]-1], incorrect_color);}
-			if(grid[2][0] != -1) {main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], incorrect_color);}
+			if(grid[0][0] != -1) {main_grid.setColor(grid_lines[grid[0][0]-1][grid[0][1]-1], color_incorrect);}
+			if(grid[1][0] != -1) {main_grid.setColor(grid_lines[grid[1][0]-1][grid[1][1]-1], color_incorrect);}
+			if(grid[2][0] != -1) {main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], color_incorrect);}
 			
 			grid[0] = nulled;
 			grid[1] = nulled;
@@ -319,7 +360,7 @@ public class RubiksCube extends JPanel {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					main_grid.setColor(bg_color);
+					main_grid.setColor(color_bg);
 					repaint();
 				}
 				
@@ -330,12 +371,13 @@ public class RubiksCube extends JPanel {
 			
 		} else if(grid[2][0] != -1) {
 			
-			main_grid.setColor(grid_lines[grid[0][0]-1][grid[0][1]-1], correct_color);
-			main_grid.setColor(grid_lines[grid[1][0]-1][grid[1][1]-1], correct_color);
-			main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], correct_color);
+			main_grid.setColor(grid_lines[grid[0][0]-1][grid[0][1]-1], color_correct);
+			main_grid.setColor(grid_lines[grid[1][0]-1][grid[1][1]-1], color_correct);
+			main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], color_correct);
 			repaint();
 			
-			Timer timer = new Timer(200, new ActionListener() {
+			final int[] nulled_array = {-1, -1};
+			CTimer timer = new CTimer(200, nulled_array, new ActionListener() {
 				
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -365,7 +407,12 @@ public class RubiksCube extends JPanel {
 					}
 					
 					shiftRubiks("F");
-					rubiks.setColor(bg_color);
+					main_grid.setColor(color_bg);
+					
+					grid[0] = nulled_array;
+					grid[1] = nulled_array;
+					grid[2] = nulled_array;
+					
 					repaint();
 					
 				}
@@ -377,124 +424,6 @@ public class RubiksCube extends JPanel {
 			
 		} else {repaint();}
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		/*if(grid[0][0] == -1) {grid[0] = settings;} //Is anything selected?
-		
-		else if(grid[1][0] == -1) { //A grid is selected so is a second grid selected?
-			 	if(!(grid[0][0] == row && grid[0][1] == col)) { //Only one grid is selected so check if this grid is selected
-			 		
-			 		if(grid[0][0] == row) { //This grid is not selected so check if it is on the same row as the one that is
-			 			
-			 			//It's on the same row so check if it's beside it else set reset to true
-			 			if(col+1 == grid[0][1]) {dir = "Left";}
-			 			else if(col-1 == grid[0][1]) {dir = "Right";}
-			 			else {reset = true;} 
-			 			
-			 		} else if (grid[0][1] == col) { //Not on the same row so check if it is on the same column
-			 			
-			 			//It's on the same column so check if it's beside it else set reset to true
-			 			if(row+1 == grid[0][0]) {dir = "Up";}
-			 			else if(row-1 == grid[0][0]) {dir = "Down";}
-			 			else {reset = true;}
-			 			
-			 		} else {reset = true;} //This grid is not beside any selected grids so reset
-			 		grid[1] = settings;
-				} else {reset = true;} //This grid is already selected so reset
-			}
-		
-		else if(!(grid[0][0] == row && grid[0][1] == col) && !(grid[1][0] == row && grid[1][1] == col)) { //Check if grid is already selected
-				
-				if(dir.equals("Up")) {
-					if(row+1 == grid[1][0]) {shift = true;}
-					else {reset = true;}
-				} 
-				
-				else if(dir.equals("Down")) {
-					if(row-1 == grid[1][0]) {shift = true;}
-					else {reset = true;}
-				}
-				
-				else if(dir.equals("Left")) {
-					if(col+1 == grid[1][1]) {shift = true;}
-					else reset = true;
-				}
-				
-				else if(dir.equals("Right")) {
-					if(col-1 == grid[1][1]) {shift = true;}
-					else {reset = true;}
-				}
-				
-				else {reset = true;}
-				
-			} else {reset = true;} //This grid is already selected so reset*/
-		
-		
-		/*if(reset) {
-			
-			grid[0] = settings;
-			grid[1] = nulled;
-			grid[2] = nulled;
-			main_grid.setColor(bg_color);
-			
-			dir = "";
-			
-		} 
-		
-		int total_lines = grid_lines[row-1][col-1].length;
-		
-		for(int i=0;i<total_lines;i+=2) {
-			
-			final String row_id = String.valueOf(grid_lines[row-1][col-1][i]);
-			final String col_id = String.valueOf(grid_lines[row-1][col-1][i+1]);
-			
-			main_grid.setColor(row_id + ":" + col_id, selected_color);
-			
-		}
-		
-		repaint();
-		
-		if(shift) {
-			
-			shiftRubiks("F");
-			dir = "";
-			
-			grid[0] = nulled;
-			grid[1] = nulled;
-			grid[2] = nulled;
-			
-			Timer timer = new Timer(200, new ActionListener() {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					main_grid.setColor(bg_color);
-					repaint();
-				}
-				
-			});
-			
-			timer.setRepeats(false);
-			timer.start();
-			
-		}*/
-
 	}
 
 	public void subgridPressed(final String face) {
@@ -504,18 +433,18 @@ public class RubiksCube extends JPanel {
 		
 		if(face.equals("L") || face.equals("R")) {
 			dir = "Hor";
-			sub_grids.setColor(face, correct_color);
+			sub_grids.setColor(face, color_correct);
 			repaint();
 			
 		} else if(face.equals("U") || face.equals("D")) {
 			dir = "Ver";
-			sub_grids.setColor(face, correct_color);
+			sub_grids.setColor(face, color_correct);
 			repaint();
 			
 			
 		} else {
 			correct = true;
-			sub_grids.setColor(face, incorrect_color);
+			sub_grids.setColor(face, color_incorrect);
 			repaint();
 		}
 		
@@ -529,7 +458,7 @@ public class RubiksCube extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if(!correct_array[0]) {shiftRubiks(face);}
-				sub_grids.setColor(bg_color);
+				sub_grids.setColor(color_bg);
 				repaint();
 			}
 			
@@ -539,6 +468,73 @@ public class RubiksCube extends JPanel {
 		timer.start();
 		
 	}
+	
+	public void setSolvedState() {
+		
+		
+		
+	}
+	
+	public void setShuffledState() {
+		
+	}
+	
+	public void setSuperflippedState() {
+		
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
+		int      revert = -1;
+		
+		for(int i=0;i<6;i++) {
+			for(int n=0;n<3;n++) {
+				for(int t=0;t<3;t++) {
+					if(front < 6-i) {rubiks.setColor(face[i+front]+":"+String.valueOf(n+1)+":"+String.valueOf(t+1), colors[(superflip[i][(n*3)+t])-1]);}
+					else {
+						if(revert == -1) {revert = i;}
+						rubiks.setColor(face[(5-front)+(i-revert)]+":"+String.valueOf(n+1)+":"+String.valueOf(t+1), colors[(superflip[i][(n*3)+t])-1]);
+					}
+				}
+			}
+		}
+		
+		repaint();
+		
+	}
+	
+	public void setAsFront() {
+		
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
+		Color[]  color  = new Color[6];
+		int[]    attrib = new int[3];
+		
+		for(int i=0;i<6;i++) {
+			color[i] = rubiks.getColor(face[i]+":1:1");
+		}
+		
+		int[][] color_attrib = new int[6][3];
+		for(int i=0;i<6;i++) {
+			color_attrib[i][0] = color[i].getRed();
+			color_attrib[i][1] = color[i].getGreen();
+			color_attrib[i][2] = color[i].getBlue();
+		}
+		
+		for(int i=0;i<6;i++) {
+			
+			attrib[0] = colors[i].getRed();
+			attrib[1] = colors[i].getGreen();
+			attrib[2] = colors[i].getBlue();
+			
+			if(color_attrib[i][0] == attrib[0] && color_attrib[i][1] == attrib[1] && color_attrib[i][2] == attrib[2]) {
+				front = i;
+				return;
+			}
+			
+		}
+		
+	}
+	
+
 	
 	//---------------------------------------------------------------------------------------//
 	//                                      Shift Methods                                    //
@@ -564,12 +560,15 @@ public class RubiksCube extends JPanel {
 		
 		Color[]  color = new Color[12];
 		String[] face  = {"F", "D", "B", "U"};
+		String grid_space;
 		
 		for(int i=0;i<12;i++) {
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
-			String grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);
+			if(face_no == 2) {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(4-col);}
+			else             {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);}
+			
 			color[i] = rubiks.getColor(grid_space);
 		}
 		
@@ -577,7 +576,9 @@ public class RubiksCube extends JPanel {
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
-			String grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);
+			if(face_no == 2) {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(4-col);}
+			else             {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);}
+			
 			if(i<9) {rubiks.setColor(grid_space, color[i+3]);}
 			else    {rubiks.setColor(grid_space, color[i-9]);}
 		}
@@ -585,18 +586,23 @@ public class RubiksCube extends JPanel {
 		if(col == 1) {shiftRotate("L", 3);}
 		if(col == 3) {shiftRotate("R", 1);}
 		
+		shiftFlip(col, "D");
+		
 	}
 	
 	public void shiftDown(int col) {
 		
 		Color[]  color = new Color[12];
 		String[] face  = {"F", "D", "B", "U"};
+		String grid_space;
 		
 		for(int i=0;i<12;i++) {
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
-			String grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);
+			if(face_no == 2) {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(4-col);}
+			else             {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);}
+			
 			color[i] = rubiks.getColor(grid_space);
 		}
 		
@@ -604,13 +610,17 @@ public class RubiksCube extends JPanel {
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
-			String grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);
+			if(face_no == 2) {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(4-col);}
+			else             {grid_space = face[face_no] + ":" + String.valueOf(row) + ":" + String.valueOf(col);}
+			
 			if(i<3) {rubiks.setColor(grid_space, color[i+9]);}
 			else    {rubiks.setColor(grid_space, color[i-3]);}
 		}
 		
 		if(col == 1) {shiftRotate("L", 1);}
 		if(col == 3) {shiftRotate("R", 3);}
+		
+		shiftFlip(col, "U");
 		
 	}
 	
@@ -670,9 +680,11 @@ public class RubiksCube extends JPanel {
 	
 	public void shiftRotate(String face, int repeats) {
 		
-		Color[] color = new Color[9];
+		Color[] color;
+		int count = 0;
 		
 		for(int i=0;i<repeats;i++) { //Rotate 3 times
+			color = new Color[9];
 			
 			for(int n=1;n<4;n++) { //Row
 				for(int t=1;t<4;t++) { //Column
@@ -688,30 +700,50 @@ public class RubiksCube extends JPanel {
 			
 		}
 		
+		while(count < repeats && face.equals("F")) {
+			color = new Color[12];
+			
+			//Get colors for frontface edges of subfaces
+			for(int i=0;i<3;i++) {color[i]   = rubiks.getColor("R:"+String.valueOf(i+1)+":1");} //Right face
+			for(int i=0;i<3;i++) {color[i+3] = rubiks.getColor("D:1:"+String.valueOf(i+1));}    //Down face
+			for(int i=0;i<3;i++) {color[i+6] = rubiks.getColor("L:"+String.valueOf(i+1)+":3");} //Left face
+			for(int i=0;i<3;i++) {color[i+9] = rubiks.getColor("U:3:"+String.valueOf(i+1));}    //Up face
+			
+			Color[] temp_color = new Color[12];
+			for(int i=0;i<12;i++) {temp_color[i] = color[i];}
+			
+			for(int i=0;i<12;i++) {
+				if(i<9) {color[i+3] = temp_color[i];}
+				else    {color[i-9] = temp_color[i];}				
+			}
+			
+			//Set rotated colors for frontface edges of subfaces
+			for(int i=0;i<3;i++) {rubiks.setColor("R:"+String.valueOf(i+1)+":1", color[i]);}   //Right face
+			for(int i=0;i<3;i++) {rubiks.setColor("D:1:"+String.valueOf(i+1), color[5-i]);}    //Down face
+			for(int i=0;i<3;i++) {rubiks.setColor("L:"+String.valueOf(i+1)+":3", color[i+6]);} //Left face
+			for(int i=0;i<3;i++) {rubiks.setColor("U:3:"+String.valueOf(i+1), color[11-i]);}    //Up face
+			
+			count++;
+				
+		}
+		
 	}
 	
 	public void shiftMainHor(String face) {
 		
-		Color[][] color = new Color[4][9];
-		String[]  faces = {"F", "R", "B", "L"};
-		
-		for(int i=0;i<4;i++) {
-			color[i] = rubiks.getColorArray(faces[i]);
-		}
+		main_grid.setColor(color_bg);
 		
 		if(face.equals("R")) {
 			
-			rubiks.setColorArray("L", color[0]);
-			rubiks.setColorArray("F", color[1]);
-			rubiks.setColorArray("R", color[2]);
-			rubiks.setColorArray("B", color[3]);
+			shiftLeft(1);
+			shiftLeft(2);
+			shiftLeft(3);
 			
 		} else {
 			
-			rubiks.setColorArray("L", color[2]);
-			rubiks.setColorArray("F", color[3]);
-			rubiks.setColorArray("R", color[0]);
-			rubiks.setColorArray("B", color[1]);
+			shiftRight(1);
+			shiftRight(2);
+			shiftRight(3);
 			
 		}
 		
@@ -719,26 +751,44 @@ public class RubiksCube extends JPanel {
 	
 	public void shiftMainVer(String face) {
 		
-		Color[][] color = new Color[4][9];
-		String[]  faces = {"F", "D", "B", "U"};
-		
-		for(int i=0;i<4;i++) {
-			color[i] = rubiks.getColorArray(faces[i]);
-		}
+		main_grid.setColor(color_bg);
 		
 		if(face.equals("D")) {
 			
-			rubiks.setColorArray("U", color[0]);
-			rubiks.setColorArray("F", color[1]);
-			rubiks.setColorArray("D", color[2]);
-			rubiks.setColorArray("B", color[3]);
+			shiftUp(1);
+			shiftUp(2);
+			shiftUp(3);
 			
 		} else {
 			
-			rubiks.setColorArray("U", color[2]);
-			rubiks.setColorArray("F", color[3]);
-			rubiks.setColorArray("D", color[0]);
-			rubiks.setColorArray("B", color[1]);
+			shiftDown(1);
+			shiftDown(2);
+			shiftDown(3);
+			
+		}
+		
+	}
+	
+	public void shiftFlip(int col, String face) {
+		
+		Color color1 = rubiks.getColor("B:1:"+String.valueOf(4-col));
+		Color color2 = rubiks.getColor("B:3:"+String.valueOf(4-col));
+		rubiks.setColor("B:1:"+String.valueOf(4-col), color2);
+		rubiks.setColor("B:3:"+String.valueOf(4-col), color1);
+		
+		if(face.equals("D")) {
+			
+			Color color3 = rubiks.getColor("D:1:"+String.valueOf(col));
+			Color color4 = rubiks.getColor("D:3:"+String.valueOf(col));
+			rubiks.setColor("D:1:"+String.valueOf(col), color4);
+			rubiks.setColor("D:3:"+String.valueOf(col), color3);
+			
+		} else {
+			
+			Color color3 = rubiks.getColor("U:1:"+String.valueOf(col));
+			Color color4 = rubiks.getColor("U:3:"+String.valueOf(col));
+			rubiks.setColor("U:1:"+String.valueOf(col), color4);
+			rubiks.setColor("U:3:"+String.valueOf(col), color3);
 			
 		}
 		
