@@ -1,69 +1,90 @@
 package com.games.assortment;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class RubiksCube extends JPanel {
 	
-	private String     dir              = "";	
-	private String     grid_lines[][][] = { { {"1:1" , "2:1" , "2:2"},                 {"1:1" , "1:2" , "2:2" , "2:3" , "2:4"},                         {"1:2" , "2:4" , "2:5"} },                 //First Row
-			                              {   {"2:1" , "2:2" , "3:1" , "4:1" , "4:2"}, {"2:2" , "2:3" , "2:4" , "3:1" , "3:2" , "4:2" , "4:3" , "4:4"}, {"2:4" , "2:5" , "3:2" , "4:4" , "4:5"} }, //Second Row
-			                              {   {"4:1" , "4:2" , "5:1"},                 {"4:2" , "4:3" , "4:4" , "5:1" , "5:2"},                         {"4:4" , "4:5" , "5:2"} } };               //Third Row
-	                                                                                                                                                     
-	private int        move             = 0;
-	private int        front            = 0;
-	private int        grid[][]         = { {-1, -1}, {-1, -1}, {-1, -1} };
+	private String        dir              = "";
+	private String        grid_lines[][][] = { { {"1:1" , "2:1" , "2:2"},                 {"1:1" , "1:2" , "2:2" , "2:3" , "2:4"},                         {"1:2" , "2:4" , "2:5"} },                 //First Row
+			                                   { {"2:1" , "2:2" , "3:1" , "4:1" , "4:2"}, {"2:2" , "2:3" , "2:4" , "3:1" , "3:2" , "4:2" , "4:3" , "4:4"}, {"2:4" , "2:5" , "3:2" , "4:4" , "4:5"} }, //Second Row
+			                                   { {"4:1" , "4:2" , "5:1"},                 {"4:2" , "4:3" , "4:4" , "5:1" , "5:2"},                         {"4:4" , "4:5" , "5:2"} }                  //Third Row
+			                                 };
 	
-	private int        valid_moves[][]  = { {1,1 , 1,2 , 1,3}, {2,1 , 2,2 , 2,3}, {3,1 , 3,2 , 3,3}, //Right
-											{1,3 , 1,2 , 1,1}, {2,3 , 2,2 , 2,1}, {3,3 , 3,2 , 3,1}, //Left
-											                                                         
-											{1,1 , 2,1 , 3,1}, {1,2 , 2,2 , 3,2}, {1,3 , 2,3 , 3,3}, //Down
-											{3,1 , 2,1 , 1,1}, {3,2 , 2,2 , 1,2}, {3,3 , 2,3 , 1,3}, //Up
-											
-											{1,2 , 1,3 , 2,3}, {2,3 , 3,3 , 3,2}, {3,2 , 3,1 , 2,1}, {2,1 , 1,1 , 1,2},   //Rotate Clockwise
-											{1,2 , 1,1 , 2,1}, {2,1 , 3,1 , 3,2}, {3,2 , 3,3 , 2,3}, {2,3 , 1,3 , 1,2} }; //Rotate Anti-Clockwise
+	private List<Integer> tofront          = new ArrayList<Integer>(); //U=1|D=2|L=3|R=4
+	private List<Integer> moves            = new ArrayList<Integer>(); //F=0|F'=1|R=2|R'=3|B=4|B'=5|L=6|L'=7|U=8|U'=9|D=10|D'=11
 	
-	private int        superflip[][]    = { {1, 5, 1, 4, 1, 2, 1, 6, 1}, //Front
-											{2, 5, 2, 1, 2, 3, 2, 6, 2}, //Right
-											{3, 5, 3, 2, 3, 4, 3, 6, 3}, //Back
-											{4, 5, 4, 3, 4, 1, 4, 6, 4}, //Left
-											{5, 3, 5, 4, 5, 2, 5, 1, 5}, //Up
-											{6, 1, 6, 4, 6, 2, 6, 3, 6}  /*Down*/ };
+	private int           move             = 0;
+	private int           same_move[]      = {-1, 0};
 	
-	private Color      color_bg         = new Color(51 , 51 , 51 );
-	private Color      color_selected   = new Color(0  , 130, 255);
-	private Color      color_correct    = new Color(0  , 130, 25 );
-	private Color      color_incorrect  = new Color(240, 20 , 20 );
-	private Color      color_red        = new Color(170, 0  , 0  );
-	private Color      color_green      = new Color(0  , 170, 0  );
-	private Color      color_blue       = new Color(70 , 100, 150);
-	private Color      color_yellow     = new Color(250, 230, 0  );
-	private Color      color_orange     = new Color(250, 130, 50 );
-	private Color      color_white      = new Color(235, 235, 235);
+	private int           grid[][]         = { {-1, -1}, {-1, -1}, {-1, -1} };
+	                      
+	private int           front[][]        = {//F  R  B  L  U  D 
+						   					   {0, 1, 2, 3, 4, 5}, //Layout
+						   				      //U  L  R  D	  <- Faces relative to grid
+						   				       {4, 3, 1, 5}, //Front
+						   				       {4, 0, 2, 5}, //Right
+						   				       {4, 1, 3, 5}, //Back
+						   				       {4, 2, 0, 5}, //Left
+						   				       {2, 3, 1, 0}, //Up
+						   				       {0, 3, 1, 2}  //Down
+						   				     };
+	                      
+	private int           valid_moves[][]  = { {1,1 , 1,2 , 1,3}, {2,1 , 2,2 , 2,3}, {3,1 , 3,2 , 3,3}, //Right
+						   				       {1,3 , 1,2 , 1,1}, {2,3 , 2,2 , 2,1}, {3,3 , 3,2 , 3,1}, //Left
+						   				                              
+						   				       {1,1 , 2,1 , 3,1}, {1,2 , 2,2 , 3,2}, {1,3 , 2,3 , 3,3}, //Down
+						   				       {3,1 , 2,1 , 1,1}, {3,2 , 2,2 , 1,2}, {3,3 , 2,3 , 1,3}, //Up
+						   				       
+						   				       {1,2 , 1,3 , 2,3}, {2,3 , 3,3 , 3,2}, {3,2 , 3,1 , 2,1}, {2,1 , 1,1 , 1,2}, //Rotate Clockwise
+						   				       {1,2 , 1,1 , 2,1}, {2,1 , 3,1 , 3,2}, {3,2 , 3,3 , 2,3}, {2,3 , 1,3 , 1,2}  //Rotate Anti-Clockwise
+						   				     };
+	                      
+	private Color         color_bg         = new Color(51 , 51 , 51 );
+	private Color         color_selected   = new Color(0  , 130, 255);
+	private Color         color_correct    = new Color(0  , 130, 25 );
+	private Color         color_incorrect  = new Color(240, 20 , 20 );
+	private Color         color_red        = new Color(150, 0  , 0  );
+	private Color         color_green      = new Color(0  , 170, 0  );
+	private Color         color_blue       = new Color(70 , 100, 150);
+	private Color         color_yellow     = new Color(250, 230, 0  );
+	private Color         color_orange     = new Color(250, 130, 50 );
+	private Color         color_white      = new Color(235, 235, 235);
 	
-	private CButton    btn_solve;
-	private CButton    btn_tutorial;
-	private CButton    btn_shuffle;
-	private CButton    btn_superflip;
-	private CButton    btn_front;
-	private CButton    btn_gofront;
-	
-	private CPaintList main_grid;
-	private CPaintList sub_grids;
-	private CPaintList rubiks;
+	private CTextField    moves_box;
+	                      
+	private CButton       btn_solve;
+	private CButton       btn_moves;
+	private CButton       btn_shuffle;
+	private CButton       btn_superflip;
+	private CButton       btn_front;
+	private CButton       btn_gofront;
+	private CButton       btn_undo;
+	private CButton       btn_redo;
+	                      
+	private CPaintList    main_grid;
+	private CPaintList    sub_grids;
+	private CPaintList    rubiks;
 
 	public RubiksCube() {
-
+		
 		createGrids();
 		createRubiks();
-		showButtons();
+		createMovesBox();
+		createButtons();
 		
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -100,59 +121,59 @@ public class RubiksCube extends JPanel {
 	public void createGrids() {
 		
 		main_grid = new CPaintList();
-		main_grid.add("1:1", 216, 152, 5, 64, "rectangle", color_bg); //First Row
-		main_grid.add("1:2", 285, 152, 5, 64, "rectangle", color_bg); //First Row
-		                                                  
-		main_grid.add("2:1", 152, 216, 64, 5, "rectangle", color_bg); //Second Row
-		main_grid.add("2:2", 216, 216, 5, 5, "rectangle", color_bg);  //Second Row
-		main_grid.add("2:3", 221, 216, 64, 5, "rectangle", color_bg); //Second Row
-		main_grid.add("2:4", 285, 216, 5, 5, "rectangle", color_bg);  //Second Row
-		main_grid.add("2:5", 290, 216, 64, 5, "rectangle", color_bg); //Second Row
-		                                                   
-		main_grid.add("3:1", 216, 221, 5, 64, "rectangle", color_bg); //Third Row
-		main_grid.add("3:2", 285, 221, 5, 64, "rectangle", color_bg); //Third Row
-		                                                   
-		main_grid.add("4:1", 152, 285, 64, 5, "rectangle", color_bg); //Fourth Row
-		main_grid.add("4:2", 216, 285, 5, 5, "rectangle", color_bg);  //Fourth Row
-		main_grid.add("4:3", 221, 285, 64, 5, "rectangle", color_bg); //Fourth Row
-		main_grid.add("4:4", 285, 285, 5, 5, "rectangle", color_bg);  //Fourth Row
-		main_grid.add("4:5", 290, 285, 64, 5, "rectangle", color_bg); //Fourth Row
-		                                                   
-		main_grid.add("5:1", 216, 290, 5, 64, "rectangle", color_bg); //Fifth Row
-		main_grid.add("5:2", 285, 290, 5, 64, "rectangle", color_bg); //Fifth Row
+		main_grid.addRectangle("1:1", 216, 152, 5, 64, CPaintList.FILLED, color_bg); //First Row
+		main_grid.addRectangle("1:2", 285, 152, 5, 64, CPaintList.FILLED, color_bg); //First Row
+		                 
+		main_grid.addRectangle("2:1", 152, 216, 64, 5, CPaintList.FILLED, color_bg); //Second Row
+		main_grid.addRectangle("2:2", 216, 216, 5, 5, CPaintList.FILLED, color_bg);  //Second Row
+		main_grid.addRectangle("2:3", 221, 216, 64, 5, CPaintList.FILLED, color_bg); //Second Row
+		main_grid.addRectangle("2:4", 285, 216, 5, 5, CPaintList.FILLED, color_bg);  //Second Row
+		main_grid.addRectangle("2:5", 290, 216, 64, 5, CPaintList.FILLED, color_bg); //Second Row
+		                                       
+		main_grid.addRectangle("3:1", 216, 221, 5, 64, CPaintList.FILLED, color_bg); //Third Row
+		main_grid.addRectangle("3:2", 285, 221, 5, 64, CPaintList.FILLED, color_bg); //Third Row
+		                                      
+		main_grid.addRectangle("4:1", 152, 285, 64, 5, CPaintList.FILLED, color_bg); //Fourth Row
+		main_grid.addRectangle("4:2", 216, 285, 5, 5, CPaintList.FILLED, color_bg);  //Fourth Row
+		main_grid.addRectangle("4:3", 221, 285, 64, 5, CPaintList.FILLED, color_bg); //Fourth Row
+		main_grid.addRectangle("4:4", 285, 285, 5, 5, CPaintList.FILLED, color_bg);  //Fourth Row
+		main_grid.addRectangle("4:5", 290, 285, 64, 5, CPaintList.FILLED, color_bg); //Fourth Row
+		                                       
+		main_grid.addRectangle("5:1", 216, 290, 5, 64, CPaintList.FILLED, color_bg); //Fifth Row
+		main_grid.addRectangle("5:2", 285, 290, 5, 64, CPaintList.FILLED, color_bg); //Fifth Row
 		
 		//Sub grids
 		sub_grids = new CPaintList();
 		
 		//Right face
-		sub_grids.add("R:hor1", 379, 234, 102, 3, "rectangle", color_bg);
-		sub_grids.add("R:hor2", 379, 269, 102, 3, "rectangle", color_bg);
-		sub_grids.add("R:ver1", 411, 202, 3, 102, "rectangle", color_bg);
-		sub_grids.add("R:ver2", 446, 202, 3, 102, "rectangle", color_bg);
-		                                                       
-		//Back face                                            
-		sub_grids.add("B:hor1", 506, 234, 102, 3, "rectangle", color_bg);
-		sub_grids.add("B:hor2", 506, 269, 102, 3, "rectangle", color_bg);
-		sub_grids.add("B:ver1", 538, 202, 3, 102, "rectangle", color_bg);
-		sub_grids.add("B:ver2", 573, 202, 3, 102, "rectangle", color_bg);
-		
-		//Left face
-		sub_grids.add("L:hor1", 25, 234, 102, 3, "rectangle", color_bg);
-		sub_grids.add("L:hor2", 25, 269, 102, 3, "rectangle", color_bg);
-		sub_grids.add("L:ver1", 57, 202, 3, 102, "rectangle", color_bg);
-		sub_grids.add("L:ver2", 92, 202, 3, 102, "rectangle", color_bg);
-		                                                     
-		//Up face                                            
-		sub_grids.add("U:hor1", 202, 57, 102, 3, "rectangle", color_bg);
-		sub_grids.add("U:hor2", 202, 92, 102, 3, "rectangle", color_bg);
-		sub_grids.add("U:ver1", 234, 25, 3, 102, "rectangle", color_bg);
-		sub_grids.add("U:ver2", 269, 25, 3, 102, "rectangle", color_bg);
-		
-		//Down face
-		sub_grids.add("D:hor1", 202, 411, 102, 3, "rectangle", color_bg);
-		sub_grids.add("D:hor2", 202, 446, 102, 3, "rectangle", color_bg);
-		sub_grids.add("D:ver1", 234, 379, 3, 102, "rectangle", color_bg);
-		sub_grids.add("D:ver2", 269, 379, 3, 102, "rectangle", color_bg);
+		sub_grids.addRectangle("R:hor1", 379, 234, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("R:hor2", 379, 269, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("R:ver1", 411, 202, 3, 102, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("R:ver2", 446, 202, 3, 102, CPaintList.FILLED, color_bg);
+		                   
+		//Back face        
+		sub_grids.addRectangle("B:hor1", 506, 234, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("B:hor2", 506, 269, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("B:ver1", 538, 202, 3, 102, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("B:ver2", 573, 202, 3, 102, CPaintList.FILLED, color_bg);
+		                    
+		//Left face         
+		sub_grids.addRectangle("L:hor1", 25, 234, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("L:hor2", 25, 269, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("L:ver1", 57, 202, 3, 102, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("L:ver2", 92, 202, 3, 102, CPaintList.FILLED, color_bg);
+		                   
+		//Up face          
+		sub_grids.addRectangle("U:hor1", 202, 57, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("U:hor2", 202, 92, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("U:ver1", 234, 25, 3, 102, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("U:ver2", 269, 25, 3, 102, CPaintList.FILLED, color_bg);
+		                    
+		//Down face         
+		sub_grids.addRectangle("D:hor1", 202, 411, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("D:hor2", 202, 446, 102, 3, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("D:ver1", 234, 379, 3, 102, CPaintList.FILLED, color_bg);
+		sub_grids.addRectangle("D:ver2", 269, 379, 3, 102, CPaintList.FILLED, color_bg);
 		
 		
 	}
@@ -162,88 +183,123 @@ public class RubiksCube extends JPanel {
 		rubiks = new CPaintList();
 		
 		//Front face
-		rubiks.add("F:1:1", 152, 152, 64, 64, "rectangle", color_red);
-		rubiks.add("F:1:2", 221, 152, 64, 64, "rectangle", color_red);
-		rubiks.add("F:1:3", 290, 152, 64, 64, "rectangle", color_red);
-		rubiks.add("F:2:1", 152, 221, 64, 64, "rectangle", color_red);
-		rubiks.add("F:2:2", 221, 221, 64, 64, "rectangle", color_red);
-		rubiks.add("F:2:3", 290, 221, 64, 64, "rectangle", color_red);
-		rubiks.add("F:3:1", 152, 290, 64, 64, "rectangle", color_red);
-		rubiks.add("F:3:2", 221, 290, 64, 64, "rectangle", color_red);
-		rubiks.add("F:3:3", 290, 290, 64, 64, "rectangle", color_red);
+		rubiks.addRectangle("F:1:1", 152, 152, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:1:2", 221, 152, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:1:3", 290, 152, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:2:1", 152, 221, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:2:2", 221, 221, 64, 64, CPaintList.FILLED, color_red, "F", new Font("Arial", Font.BOLD, 48), color_bg);
+		rubiks.addRectangle("F:2:3", 290, 221, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:3:1", 152, 290, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:3:2", 221, 290, 64, 64, CPaintList.FILLED, color_red);
+		rubiks.addRectangle("F:3:3", 290, 290, 64, 64, CPaintList.FILLED, color_red);
 		
 		//Right face
-		rubiks.add("R:1:1", 379, 202, 32, 32, "rectangle", color_green);
-		rubiks.add("R:1:2", 414, 202, 32, 32, "rectangle", color_green);
-		rubiks.add("R:1:3", 449, 202, 32, 32, "rectangle", color_green);
-		rubiks.add("R:2:1", 379, 237, 32, 32, "rectangle", color_green);
-		rubiks.add("R:2:2", 414, 237, 32, 32, "rectangle", color_green);
-		rubiks.add("R:2:3", 449, 237, 32, 32, "rectangle", color_green);
-		rubiks.add("R:3:1", 379, 272, 32, 32, "rectangle", color_green);
-		rubiks.add("R:3:2", 414, 272, 32, 32, "rectangle", color_green);
-		rubiks.add("R:3:3", 449, 272, 32, 32, "rectangle", color_green);
+		rubiks.addRectangle("R:1:1", 379, 202, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:1:2", 414, 202, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:1:3", 449, 202, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:2:1", 379, 237, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:2:2", 414, 237, 32, 32, CPaintList.FILLED, color_green, "R", new Font("Arial", Font.BOLD, 24), color_bg);
+		rubiks.addRectangle("R:2:3", 449, 237, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:3:1", 379, 272, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:3:2", 414, 272, 32, 32, CPaintList.FILLED, color_green);
+		rubiks.addRectangle("R:3:3", 449, 272, 32, 32, CPaintList.FILLED, color_green);
 		                              
 		//Back face                   
-		rubiks.add("B:1:1", 506, 202, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:1:2", 541, 202, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:1:3", 576, 202, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:2:1", 506, 237, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:2:2", 541, 237, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:2:3", 576, 237, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:3:1", 506, 272, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:3:2", 541, 272, 32, 32, "rectangle", color_orange);
-		rubiks.add("B:3:3", 576, 272, 32, 32, "rectangle", color_orange);
+		rubiks.addRectangle("B:1:1", 506, 202, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:1:2", 541, 202, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:1:3", 576, 202, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:2:1", 506, 237, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:2:2", 541, 237, 32, 32, CPaintList.FILLED, color_orange, "B", new Font("Arial", Font.BOLD, 24), color_bg);
+		rubiks.addRectangle("B:2:3", 576, 237, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:3:1", 506, 272, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:3:2", 541, 272, 32, 32, CPaintList.FILLED, color_orange);
+		rubiks.addRectangle("B:3:3", 576, 272, 32, 32, CPaintList.FILLED, color_orange);
 		                            
 		//Left face                 
-		rubiks.add("L:1:1", 25, 202, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:1:2", 60, 202, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:1:3", 95, 202, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:2:1", 25, 237, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:2:2", 60, 237, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:2:3", 95, 237, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:3:1", 25, 272, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:3:2", 60, 272, 32, 32, "rectangle", color_blue);
-		rubiks.add("L:3:3", 95, 272, 32, 32, "rectangle", color_blue);
+		rubiks.addRectangle("L:1:1", 25, 202, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:1:2", 60, 202, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:1:3", 95, 202, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:2:1", 25, 237, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:2:2", 60, 237, 32, 32, CPaintList.FILLED, color_blue, "L", new Font("Arial", Font.BOLD, 24), color_bg);
+		rubiks.addRectangle("L:2:3", 95, 237, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:3:1", 25, 272, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:3:2", 60, 272, 32, 32, CPaintList.FILLED, color_blue);
+		rubiks.addRectangle("L:3:3", 95, 272, 32, 32, CPaintList.FILLED, color_blue);
 		                             
 		//Up face                    
-		rubiks.add("U:1:1", 202, 25, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:1:2", 237, 25, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:1:3", 272, 25, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:2:1", 202, 60, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:2:2", 237, 60, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:2:3", 272, 60, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:3:1", 202, 95, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:3:2", 237, 95, 32, 32, "rectangle", color_yellow);
-		rubiks.add("U:3:3", 272, 95, 32, 32, "rectangle", color_yellow);
+		rubiks.addRectangle("U:1:1", 202, 25, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:1:2", 237, 25, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:1:3", 272, 25, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:2:1", 202, 60, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:2:2", 237, 60, 32, 32, CPaintList.FILLED, color_yellow, "U", new Font("Arial", Font.BOLD, 24), color_bg);
+		rubiks.addRectangle("U:2:3", 272, 60, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:3:1", 202, 95, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:3:2", 237, 95, 32, 32, CPaintList.FILLED, color_yellow);
+		rubiks.addRectangle("U:3:3", 272, 95, 32, 32, CPaintList.FILLED, color_yellow);
 		                              
 		//Down face                   
-		rubiks.add("D:1:1", 202, 379, 32, 32, "rectangle", color_white);
-		rubiks.add("D:1:2", 237, 379, 32, 32, "rectangle", color_white);
-		rubiks.add("D:1:3", 272, 379, 32, 32, "rectangle", color_white);
-		rubiks.add("D:2:1", 202, 414, 32, 32, "rectangle", color_white);
-		rubiks.add("D:2:2", 237, 414, 32, 32, "rectangle", color_white);
-		rubiks.add("D:2:3", 272, 414, 32, 32, "rectangle", color_white);
-		rubiks.add("D:3:1", 202, 449, 32, 32, "rectangle", color_white);
-		rubiks.add("D:3:2", 237, 449, 32, 32, "rectangle", color_white);
-		rubiks.add("D:3:3", 272, 449, 32, 32, "rectangle", color_white);
+		rubiks.addRectangle("D:1:1", 202, 379, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:1:2", 237, 379, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:1:3", 272, 379, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:2:1", 202, 414, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:2:2", 237, 414, 32, 32, CPaintList.FILLED, color_white, "D", new Font("Arial", Font.BOLD, 24), color_bg);
+		rubiks.addRectangle("D:2:3", 272, 414, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:3:1", 202, 449, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:3:2", 237, 449, 32, 32, CPaintList.FILLED, color_white);
+		rubiks.addRectangle("D:3:3", 272, 449, 32, 32, CPaintList.FILLED, color_white);
 		
 	}
 	
-	public void showButtons() {
+	public void createMovesBox() {
+		
+		moves_box = new CTextField();
+		moves_box.setFocusable(false);
+		moves_box.setBackground(color_bg.darker());
+		moves_box.setBorder(BorderFactory.createLineBorder(rubiks.getColor("F:2:2"), 1, true));
+		moves_box.setBounds(379, 25, 229, 67);
+		add(moves_box);
+		
+	}
+	
+	public void createButtons() {
 		
 		setLayout(null);
 		
 		btn_solve = new CButton("Solve");
-		btn_solve.setBounds(377, 377, 114, 34);
+		btn_solve.setBounds(379, 379, 114, 34);
+		btn_solve.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setSolvedState();
+			}
+			
+		});
 		
-		btn_tutorial = new CButton("Feature");
-		btn_tutorial.setBounds(492, 377, 114, 34);
+		btn_moves = new CButton("Reset Moves");
+		btn_moves.setBounds(494, 379, 114, 34);
+		btn_moves.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				resetMoves();
+			}
+			
+		});
 		
 		btn_shuffle = new CButton("Shuffle");
-		btn_shuffle.setBounds(377, 411, 114, 34);
+		btn_shuffle.setBounds(379, 413, 114, 34);
+		btn_shuffle.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setShuffledState();
+			}
+			
+		});
 		
 		btn_superflip = new CButton("Superflip");
-		btn_superflip.setBounds(492, 411, 114, 34);
+		btn_superflip.setBounds(494, 413, 114, 34);
 		btn_superflip.addMouseListener(new MouseAdapter() {
 			
 			@Override
@@ -254,7 +310,7 @@ public class RubiksCube extends JPanel {
 		});
 		
 		btn_front = new CButton("Set Front");
-		btn_front.setBounds(377, 445, 114, 34);
+		btn_front.setBounds(379, 447, 114, 34);
 		btn_front.addMouseListener(new MouseAdapter() {
 			
 			@Override
@@ -265,14 +321,30 @@ public class RubiksCube extends JPanel {
 		});
 		
 		btn_gofront = new CButton("Go To Front");
-		btn_gofront.setBounds(492, 445, 114, 34);
+		btn_gofront.setBounds(494, 447, 114, 34);
+		btn_gofront.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				goToFront();
+			}
+			
+		});
+		
+		btn_undo = new CButton("Undo");
+		btn_undo.setBounds(379, 93, 114, 34);
+		
+		btn_redo = new CButton("Redo");
+		btn_redo.setBounds(494, 93, 114, 34);
 		
 		add(btn_solve);
-		add(btn_tutorial);
+		add(btn_moves);
 		add(btn_shuffle);
 		add(btn_superflip);
 		add(btn_front);
 		add(btn_gofront);
+		add(btn_undo);
+		add(btn_redo);
 		
 	}
 	
@@ -292,7 +364,6 @@ public class RubiksCube extends JPanel {
 		
 		int[]   settings = {row, col};
 		int[]   nulled   = {-1, -1};
-		boolean shift    = false;
 		boolean reset    = false;
 		
 		if(grid[0][0] == -1) {
@@ -376,8 +447,11 @@ public class RubiksCube extends JPanel {
 			main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], color_correct);
 			repaint();
 			
-			final int[] nulled_array = {-1, -1};
-			CTimer timer = new CTimer(200, nulled_array, new ActionListener() {
+			final Cluster[] nulled_cluster = new Cluster[2];
+			nulled_cluster[0] = new Cluster(-1);
+			nulled_cluster[1] = new Cluster(-1);
+			
+			CTimer timer = new CTimer(200, nulled_cluster, new ActionListener() {
 				
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -409,9 +483,11 @@ public class RubiksCube extends JPanel {
 					shiftRubiks("F");
 					main_grid.setColor(color_bg);
 					
-					grid[0] = nulled_array;
-					grid[1] = nulled_array;
-					grid[2] = nulled_array;
+					for(int i=0;i<2;i++) {
+						grid[0][i] = nulled_cluster[i].getInt();
+						grid[1][i] = nulled_cluster[i].getInt();
+						grid[2][i] = nulled_cluster[i].getInt();
+					}
 					
 					repaint();
 					
@@ -452,12 +528,12 @@ public class RubiksCube extends JPanel {
 		grid[1] = nulled;
 		grid[2] = nulled;
 		
-		final boolean[] correct_array = {correct};
-		CTimer timer = new CTimer(200, correct_array, new ActionListener() {
+		final Cluster Correct = new Cluster(correct);
+		CTimer timer = new CTimer(200, Correct, new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(!correct_array[0]) {shiftRubiks(face);}
+				if(!Correct.getBoolean()) {shiftRubiks(face);}
 				sub_grids.setColor(color_bg);
 				repaint();
 			}
@@ -471,70 +547,226 @@ public class RubiksCube extends JPanel {
 	
 	public void setSolvedState() {
 		
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
 		
+		for(int i=0;i<6;i++) {
+			rubiks.setColor(face[i], colors[front[0][i]]);
+		}
+		
+		for(int i=0;i<6;i++) {rubiks.setText(face[i]+":2:2", face[i]);}
+		
+		for(int i=0;i<3;i++) {
+			grid[i][0] = -1;
+			grid[i][1] = -1;
+		}
+		
+		main_grid.setColor(color_bg);
+		
+		resetMoves();
+		repaint();
 		
 	}
 	
 	public void setShuffledState() {
 		
+		Random random = new Random();
+		
+		for(int i=0;i<20;i++) {
+			
+			switch(random.nextInt(5)) {
+			case 0  : shiftUp(random.nextInt(3));    break;	
+			case 1  : shiftDown(random.nextInt(3));  break;
+			case 2  : shiftLeft(random.nextInt(3));  break;
+			case 3  : shiftRight(random.nextInt(3)); break;
+			case 4  : shiftRotate("F", 1);           break;
+			case 5  : shiftRotate("F", 3);           break;
+			default : break;
+			}
+			
+		}
+		
+		for(int i=0;i<3;i++) {
+			grid[i][0] = -1;
+			grid[i][1] = -1;
+		}
+		
+		main_grid.setColor(color_bg);
+		
+		resetMoves();
+		goToFront();
+		
 	}
 	
 	public void setSuperflippedState() {
 		
-		String[] face   = {"F", "R", "B", "L", "U", "D"};
-		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
-		int      revert = -1;
+		String[] face     = {"F", "R", "B", "L", "U", "D"};
+		Color [] color    = new Color[6];
+		
+		setSolvedState();
 		
 		for(int i=0;i<6;i++) {
-			for(int n=0;n<3;n++) {
-				for(int t=0;t<3;t++) {
-					if(front < 6-i) {rubiks.setColor(face[i+front]+":"+String.valueOf(n+1)+":"+String.valueOf(t+1), colors[(superflip[i][(n*3)+t])-1]);}
-					else {
-						if(revert == -1) {revert = i;}
-						rubiks.setColor(face[(5-front)+(i-revert)]+":"+String.valueOf(n+1)+":"+String.valueOf(t+1), colors[(superflip[i][(n*3)+t])-1]);
-					}
-				}
-			}
+			color[i] = rubiks.getColor(face[i]+":1:1");
 		}
 		
+		for(int i=0;i<6;i++) { //Loop for each face
+			
+			rubiks.setColor(face[i]+":1:2", color[front[i+1][0]]); //Up
+			rubiks.setColor(face[i]+":2:1", color[front[i+1][1]]); //Left
+			rubiks.setColor(face[i]+":2:3", color[front[i+1][2]]); //Right
+			rubiks.setColor(face[i]+":3:2", color[front[i+1][3]]); //Down
+			
+		}
+		
+		resetMoves();
 		repaint();
 		
 	}
 	
 	public void setAsFront() {
 		
-		String[] face   = {"F", "R", "B", "L", "U", "D"};
-		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
-		Color[]  color  = new Color[6];
-		int[]    attrib = new int[3];
+		String[] face   = {"F", "R", "B", "L", "U", "D"};		
+		if(Arrays.equals(front[0], getCurrentLayout())) {return;}
 		
-		for(int i=0;i<6;i++) {
-			color[i] = rubiks.getColor(face[i]+":1:1");
+		front[0] = getCurrentLayout();
+		resetMoves();
+		
+		for(int i=0;i<6;i++) {rubiks.setText(face[i]+":2:2", face[i]);}		
+		moves_box.setBorder(BorderFactory.createLineBorder(rubiks.getColor("F:2:2"), 1, true));
+		
+		for(int i=0;i<3;i++) {
+			grid[i][0] = -1;
+			grid[i][1] = -1;
 		}
 		
-		int[][] color_attrib = new int[6][3];
-		for(int i=0;i<6;i++) {
-			color_attrib[i][0] = color[i].getRed();
-			color_attrib[i][1] = color[i].getGreen();
-			color_attrib[i][2] = color[i].getBlue();
-		}
+		main_grid.setColor(color_bg);
 		
-		for(int i=0;i<6;i++) {
+		tofront = new ArrayList<Integer>();
+		repaint();
+		
+	}
+	
+	public void goToFront() {
+		
+		int amount = tofront.size();
+		
+		if(amount == 0) {repaint(); return;} //Already using front layout - repaint incase called by shuffle
+		
+		for(int i=amount;i>0;i--) {
 			
-			attrib[0] = colors[i].getRed();
-			attrib[1] = colors[i].getGreen();
-			attrib[2] = colors[i].getBlue();
-			
-			if(color_attrib[i][0] == attrib[0] && color_attrib[i][1] == attrib[1] && color_attrib[i][2] == attrib[2]) {
-				front = i;
-				return;
+			switch(tofront.get(i-1)) {
+			case 1 : shiftMainVer("U"); break;
+			case 2 : shiftMainVer("D"); break;
+			case 3 : shiftMainHor("L"); break;
+			case 4 : shiftMainHor("R"); break;
+			default: break;
 			}
 			
 		}
 		
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		for(int i=0;i<6;i++) {rubiks.setText(face[i]+":2:2", face[i]);}
+		
+		for(int i=0;i<3;i++) {
+			grid[i][0] = -1;
+			grid[i][1] = -1;
+		}
+		
+		main_grid.setColor(color_bg);
+		
+		tofront = new ArrayList<Integer>();
+		repaint();
+		
 	}
 	
+	public int[] getCurrentLayout() {
+		
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		Color[]  colors = {color_red, color_green, color_orange, color_blue, color_yellow, color_white};
+		int[]    layout = new int[6];
+		
+		//Gets layout of grids on screen
+		for(int i=0;i<6;i++) { //Loop for each face
+			for(int n=0;n<6;n++) { //Loop for each color
+				if(rubiks.compareColor(face[i]+":2:2", colors[n])) {
+					layout[i] = n;
+				}
+			}
+		}
+		
+		return layout;
+		
+	}
+	
+	public void addMove(int int_move) {
+		
+		String[] string_moves = {"F", "F2", "F'", "F'2", "F", "F2",
+								 "R", "R2", "R'", "R'2", "R", "R2",
+								 "B", "B2", "B'", "B'2", "B", "B2",
+								 "L", "L2", "L'", "L'2", "L", "L2",
+								 "U", "U2", "U'", "U'2", "U", "U2",
+								 "D", "D2", "D'", "D'2", "D", "D2",
+								 "U D'", "U2 D'2", "U' D", "U'2 D2", "U D'", "U2 D'2",
+								 "L R'", "L2 R'2", "L' R", "L'2 R2", "L R'", "L2 R'2"
+								};
+		
+		if(int_move != same_move[0] && (int_move+2 != same_move[0] && int_move-2 != same_move[0])) { //New move
+			moves.add(int_move);
+			same_move[0] = int_move;
+			same_move[1] = 0;
+		}
+		
+		else if(int_move != same_move[0]) { //Inverted
+			if(same_move[1] == 0) { //Original move was not repeated so remove it altogether
+				moves.remove(moves.size()-1);
+				try {same_move[0] = moves.get(moves.size()-1);}
+				catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
+				same_move[1] = 0;
+			} else { //Original move was repeated so remove the repeat just
+				moves.set(moves.size()-1, moves.get(moves.size()-1)-1);
+			}
+			
+		}
+		
+		else { //Same move
+			
+			moves.set(moves.size()-1, moves.get(moves.size()-1)+1);
+			switch(same_move[1]) {
+			case 0: same_move[1]++; break;
+			case 1: same_move[1]++; break;
+			case 2:
+				moves.remove(moves.size()-1);
+				try {same_move[0] = moves.get(moves.size()-1);}
+				catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
+				same_move[1] = 0;
+				break;
+			default: break;
+			}
+		}
+		
+		String[] string = new String[moves.size()];
+		Color [] color  = new Color [moves.size()];
+		Font     font   = new Font("Arial", Font.BOLD, 12);
+		
+		for(int i=0;i<moves.size();i++) {
+			 string[i] = string_moves[moves.get(i)] + " ";
+			 color [i] = Color.WHITE;
+		}
+		
+		moves_box.setText(string, color, font);	
+		repaint(379, 25, 229, 67);
+		
+	}
 
+	public void resetMoves() {
+		
+		same_move[0] = -1;
+		same_move[1] = 0;
+		moves        = new ArrayList<Integer>();
+		moves_box.setText(null, null, null);
+		repaint(379, 25, 229, 67);
+		
+	}
 	
 	//---------------------------------------------------------------------------------------//
 	//                                      Shift Methods                                    //
@@ -562,7 +794,7 @@ public class RubiksCube extends JPanel {
 		String[] face  = {"F", "D", "B", "U"};
 		String grid_space;
 		
-		for(int i=0;i<12;i++) {
+		for(int i=0;i<12;i++) { //Loop for each color
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
@@ -572,7 +804,7 @@ public class RubiksCube extends JPanel {
 			color[i] = rubiks.getColor(grid_space);
 		}
 		
-		for(int i=0;i<12;i++) {
+		for(int i=0;i<12;i++) { //loop for each color
 			int face_no = (int) Math.floor(((double)i + Math.floor(((double)i)/4))+1)/4;
 			int row     = i - face_no*3 + 1;
 			
@@ -583,8 +815,26 @@ public class RubiksCube extends JPanel {
 			else    {rubiks.setColor(grid_space, color[i-9]);}
 		}
 		
-		if(col == 1) {shiftRotate("L", 3);}
-		if(col == 3) {shiftRotate("R", 1);}
+		if(col == 1) {
+			shiftRotate("L", 3);
+			addMove(20);
+		}
+		
+		if(col == 2) {
+			tofront.add(1);
+			String[] faces  = {"F", "R", "B", "L", "U", "D"};
+			int[]    layout = getCurrentLayout();
+			for(int i=0;i<6;i++) {
+				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
+			}
+			
+			addMove(42);
+		}
+		
+		if(col == 3) {
+			shiftRotate("R", 1);
+			addMove(6);
+		}
 		
 		shiftFlip(col, "D");
 		
@@ -617,8 +867,26 @@ public class RubiksCube extends JPanel {
 			else    {rubiks.setColor(grid_space, color[i-3]);}
 		}
 		
-		if(col == 1) {shiftRotate("L", 1);}
-		if(col == 3) {shiftRotate("R", 3);}
+		if(col == 1) {
+			shiftRotate("L", 1);
+			addMove(18);
+		}
+		
+		if(col == 2) {
+			tofront.add(2);
+			String[] faces  = {"F", "R", "B", "L", "U", "D"};
+			int[]    layout = getCurrentLayout();
+			for(int i=0;i<6;i++) {
+				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
+			}
+			
+			addMove(44);
+		}
+		
+		if(col == 3) {
+			shiftRotate("R", 3);
+			addMove(8);
+		}
 		
 		shiftFlip(col, "U");
 		
@@ -646,8 +914,26 @@ public class RubiksCube extends JPanel {
 			else    {rubiks.setColor(grid_space, color[i-9]);}
 		}
 		
-		if(row == 1) {shiftRotate("U", 1);}
-		if(row == 3) {shiftRotate("D", 3);}
+		if(row == 1) {
+			shiftRotate("U", 1);
+			addMove(24);
+		}
+		
+		if(row == 2) {
+			tofront.add(3);
+			String[] faces  = {"F", "R", "B", "L", "U", "D"};
+			int[]    layout = getCurrentLayout();
+			for(int i=0;i<6;i++) {
+				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
+			}
+			
+			addMove(38);
+		}
+		
+		if(row == 3) {
+			shiftRotate("D", 3);
+			addMove(32);
+		}
 		
 	}
 	
@@ -673,8 +959,26 @@ public class RubiksCube extends JPanel {
 			else    {rubiks.setColor(grid_space, color[i-3]);}
 		}
 		
-		if(row == 1) {shiftRotate("U", 3);}
-		if(row == 3) {shiftRotate("D", 1);}
+		if(row == 1) {
+			shiftRotate("U", 3);
+			addMove(26);
+		}
+		
+		if(row == 2) {
+			tofront.add(4);
+			String[] faces  = {"F", "R", "B", "L", "U", "D"};
+			int[]    layout = getCurrentLayout();
+			for(int i=0;i<6;i++) {
+				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
+			}
+			
+			addMove(36);
+		}
+		
+		if(row == 3) {
+			shiftRotate("D", 1);
+			addMove(30);
+		}
 		
 	}
 	
@@ -724,6 +1028,7 @@ public class RubiksCube extends JPanel {
 			for(int i=0;i<3;i++) {rubiks.setColor("U:3:"+String.valueOf(i+1), color[11-i]);}    //Up face
 			
 			count++;
+			addMove(getCurrentLayout()[0]*6);
 				
 		}
 		
@@ -736,14 +1041,25 @@ public class RubiksCube extends JPanel {
 		if(face.equals("R")) {
 			
 			shiftLeft(1);
+			addMove(26); //Cancel out moves as just a view rotation
+			
 			shiftLeft(2);
+			addMove(36); //Cancel out moves as just a view rotation
+			
 			shiftLeft(3);
+			addMove(30); //Cancel out moves as just a view rotation
+			
 			
 		} else {
 			
 			shiftRight(1);
+			addMove(24); //Cancel out moves as just a view rotation
+			
 			shiftRight(2);
+			addMove(38); //Cancel out moves as just a view rotation
+			
 			shiftRight(3);
+			addMove(32); //Cancel out moves as just a view rotation
 			
 		}
 		
@@ -756,14 +1072,24 @@ public class RubiksCube extends JPanel {
 		if(face.equals("D")) {
 			
 			shiftUp(1);
+			addMove(18); //Cancel out moves as just a view rotation
+			
 			shiftUp(2);
+			addMove(44); //Cancel out moves as just a view rotation
+			
 			shiftUp(3);
+			addMove(8); //Cancel out moves as just a view rotation
 			
 		} else {
 			
 			shiftDown(1);
+			addMove(20); //Cancel out moves as just a view rotation
+			
 			shiftDown(2);
+			addMove(42); //Cancel out moves as just a view rotation
+			
 			shiftDown(3);
+			addMove(6); //Cancel out moves as just a view rotation
 			
 		}
 		
