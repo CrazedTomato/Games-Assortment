@@ -4,21 +4,27 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 public class Main {
 	
-	private static JFrame menu;
-	public  static JFrame game;
-	private static String[] game_type = {"Sudoku", "Rubik's Cube", "New Game", "New Game",
-										 "New Game", "New Game", "New Game", "New Game",
-										 "New Game", "New Game", "New Game", "New Game"};
+	private static CFrame menu;
+	public  static CFrame game;
+	
+	private static String[] game_type = {"Sudoku"    , "Rubik's Cube"  , "Space Invaders"   , "New Game",
+										 "New Game"  , "New Game"      , "New Game"         , "New Game",
+										 "New Game"  , "New Game"      , "New Game"         , "New Game"};
+	
+	private static JPanel[] classes   = {new Sudoku(), new RubiksCube(), new SpaceInvaders()};
 
+	private static int [][] dims      = { {382, 489} , {639, 534}      , {800, 600}                 };
+	
 	public static void main(String[] args) {
 		
-		menu = new JFrame("Games Assortment");
+		menu = new CFrame("Games Assortment");
 		menu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		menu.setSize(518, 124); //518-6=512 && 124-28=96
-		menu.setLocationRelativeTo(null);
+		menu.centerInScreen();
 		menu.setLayout(null);
 		menu.setResizable(false);
 		menu.setVisible(true);
@@ -77,26 +83,14 @@ public class Main {
 	public static void showGame(int game_no) {
 		
 		if(game == null || !game.isVisible()) {
-			game = new JFrame(game_type[game_no]);
+			game = new CFrame(game_type[game_no]);
 			game.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			game.setResizable(false);
 			game.setVisible(true);
+			game.setSize(dims[game_no][0], dims[game_no][1]);
+			game.centerInScreen();
+			game.add(classes[game_no]);
 			
-			switch(game_no) {
-			case 0:
-				game.setSize(382, 489);
-				game.setLocationRelativeTo(menu);
-				game.setLocation((menu.getX()+menu.getWidth()/2)-game.getWidth()/2, (menu.getY()+menu.getHeight()/2)-game.getHeight()/2);
-				game.add(new Sudoku());
-				break;
-			case 1:
-				game.setSize(639, 534);
-				game.setLocationRelativeTo(menu);
-				game.setLocation((menu.getX()+menu.getWidth()/2)-game.getWidth()/2, (menu.getY()+menu.getHeight()/2)-game.getHeight()/2);
-				game.add(new RubiksCube());
-				break;
-			default: break;
-			}
 		} else {
 			game.setVisible(true);
 		}

@@ -28,6 +28,7 @@ public class RubiksCube extends JPanel {
 	private List<Integer> moves            = new ArrayList<Integer>(); //F=0|F'=1|R=2|R'=3|B=4|B'=5|L=6|L'=7|U=8|U'=9|D=10|D'=11
 	
 	private int           move             = 0;
+	private int           locate_prev_move = -1;
 	private int           same_move[]      = {-1, 0};
 	
 	private int           grid[][]         = { {-1, -1}, {-1, -1}, {-1, -1} };
@@ -43,6 +44,8 @@ public class RubiksCube extends JPanel {
 						   				       {0, 3, 1, 2}  //Down
 						   				     };
 	                      
+	private int           last_layout[]    = {0, 1, 2, 3, 4, 5};
+	
 	private int           valid_moves[][]  = { {1,1 , 1,2 , 1,3}, {2,1 , 2,2 , 2,3}, {3,1 , 3,2 , 3,3}, //Right
 						   				       {1,3 , 1,2 , 1,1}, {2,3 , 2,2 , 2,1}, {3,3 , 3,2 , 3,1}, //Left
 						   				                              
@@ -53,6 +56,8 @@ public class RubiksCube extends JPanel {
 						   				       {1,2 , 1,1 , 2,1}, {2,1 , 3,1 , 3,2}, {3,2 , 3,3 , 2,3}, {2,3 , 1,3 , 1,2}  //Rotate Anti-Clockwise
 						   				     };
 	                      
+	private boolean       user_move        = false;
+	
 	private Color         color_bg         = new Color(51 , 51 , 51 );
 	private Color         color_selected   = new Color(0  , 130, 255);
 	private Color         color_correct    = new Color(0  , 130, 25 );
@@ -333,6 +338,14 @@ public class RubiksCube extends JPanel {
 		
 		btn_undo = new CButton("Undo");
 		btn_undo.setBounds(379, 93, 114, 34);
+		btn_undo.addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				undoMove();
+			}
+			
+		});
 		
 		btn_redo = new CButton("Redo");
 		btn_redo.setBounds(494, 93, 114, 34);
@@ -442,6 +455,8 @@ public class RubiksCube extends JPanel {
 			
 		} else if(grid[2][0] != -1) {
 			
+			user_move = true;
+			
 			main_grid.setColor(grid_lines[grid[0][0]-1][grid[0][1]-1], color_correct);
 			main_grid.setColor(grid_lines[grid[1][0]-1][grid[1][1]-1], color_correct);
 			main_grid.setColor(grid_lines[grid[2][0]-1][grid[2][1]-1], color_correct);
@@ -527,6 +542,8 @@ public class RubiksCube extends JPanel {
 		grid[0] = nulled;
 		grid[1] = nulled;
 		grid[2] = nulled;
+		
+		user_move = true;
 		
 		final Cluster Correct = new Cluster(correct);
 		CTimer timer = new CTimer(200, Correct, new ActionListener() {
@@ -688,7 +705,7 @@ public class RubiksCube extends JPanel {
 		//Gets layout of grids on screen
 		for(int i=0;i<6;i++) { //Loop for each face
 			for(int n=0;n<6;n++) { //Loop for each color
-				if(rubiks.compareColor(face[i]+":2:2", colors[n])) {
+				if(rubiks.compareColor(face[i]+":2:2", colors[front[0][n]])) {
 					layout[i] = n;
 				}
 			}
@@ -698,63 +715,193 @@ public class RubiksCube extends JPanel {
 		
 	}
 	
-	public void addMove(int int_move) {
+	public void goToLayout(int[] layout) {
 		
-		String[] string_moves = {"F", "F2", "F'", "F'2", "F", "F2",
-								 "R", "R2", "R'", "R'2", "R", "R2",
-								 "B", "B2", "B'", "B'2", "B", "B2",
-								 "L", "L2", "L'", "L'2", "L", "L2",
-								 "U", "U2", "U'", "U'2", "U", "U2",
-								 "D", "D2", "D'", "D'2", "D", "D2",
-								 "U D'", "U2 D'2", "U' D", "U'2 D2", "U D'", "U2 D'2",
-								 "L R'", "L2 R'2", "L' R", "L'2 R2", "L R'", "L2 R'2"
-								};
+		if(getCurrentLayout().equals(last_layout) || tofront.size() == 0) {return;} //Already using last layout
 		
-		if(int_move != same_move[0] && (int_move+2 != same_move[0] && int_move-2 != same_move[0])) { //New move
-			moves.add(int_move);
-			same_move[0] = int_move;
-			same_move[1] = 0;
-		}
-		
-		else if(int_move != same_move[0]) { //Inverted
-			if(same_move[1] == 0) { //Original move was not repeated so remove it altogether
-				moves.remove(moves.size()-1);
-				try {same_move[0] = moves.get(moves.size()-1);}
-				catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
-				same_move[1] = 0;
-			} else { //Original move was repeated so remove the repeat just
-				moves.set(moves.size()-1, moves.get(moves.size()-1)-1);
-			}
+		int count = tofront.size()-1;
+		while(!getCurrentLayout().equals(last_layout) && count > -1) {
 			
-		}
-		
-		else { //Same move
-			
-			moves.set(moves.size()-1, moves.get(moves.size()-1)+1);
-			switch(same_move[1]) {
-			case 0: same_move[1]++; break;
-			case 1: same_move[1]++; break;
-			case 2:
-				moves.remove(moves.size()-1);
-				try {same_move[0] = moves.get(moves.size()-1);}
-				catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
-				same_move[1] = 0;
-				break;
+			switch(tofront.get(count)) {
+			case 1 : shiftMainVer("U"); break;
+			case 2 : shiftMainVer("D"); break;
+			case 3 : shiftMainHor("L"); break;
+			case 4 : shiftMainHor("R"); break;
 			default: break;
 			}
+			
+			count--;
+			
 		}
 		
-		String[] string = new String[moves.size()];
-		Color [] color  = new Color [moves.size()];
-		Font     font   = new Font("Arial", Font.BOLD, 12);
+		String[] face   = {"F", "R", "B", "L", "U", "D"};
+		for(int i=0;i<6;i++) {rubiks.setText(face[i]+":2:2", face[i]);}
 		
-		for(int i=0;i<moves.size();i++) {
-			 string[i] = string_moves[moves.get(i)] + " ";
-			 color [i] = Color.WHITE;
+		for(int i=0;i<3;i++) {
+			grid[i][0] = -1;
+			grid[i][1] = -1;
 		}
 		
-		moves_box.setText(string, color, font);	
-		repaint(379, 25, 229, 67);
+		main_grid.setColor(color_bg);
+		
+		tofront = new ArrayList<Integer>();
+		repaint();
+		
+	}
+	
+	public void addMove(int int_move) {
+		
+		boolean  new_move     = true;
+		String[] string_moves = {"F"   , "F2"    , "F'"  , "F'2"   , /*NOT USED DIRECTLY*/ "F"   , "F2"    ,
+								 "R"   , "R2"    , "R'"  , "R'2"   , /*NOT USED DIRECTLY*/ "R"   , "R2"    ,
+								 "B"   , "B2"    , "B'"  , "B'2"   , /*NOT USED DIRECTLY*/ "B"   , "B2"    ,
+								 "L"   , "L2"    , "L'"  , "L'2"   , /*NOT USED DIRECTLY*/ "L"   , "L2"    ,
+								 "U"   , "U2"    , "U'"  , "U'2"   , /*NOT USED DIRECTLY*/ "U"   , "U2"    ,
+								 "D"   , "D2"    , "D'"  , "D'2"   , /*NOT USED DIRECTLY*/ "D"   , "D2"    ,
+								 "U D'", "U2 D'2", "U' D", "U'2 D2", /*NOT USED DIRECTLY*/ "U D'", "U2 D'2",
+								 "L R'", "L2 R'2", "L' R", "L'2 R2", /*NOT USED DIRECTLY*/ "L R'", "L2 R'2"
+								};
+		
+		//Check if the user undid moves and then made a new move
+		if(locate_prev_move < moves.size()-1) {new_move = false;}
+		try {if(!moves_box.getColor(moves.size()-1).equals(Color.WHITE)) {new_move = false;}}
+		catch(NullPointerException | IndexOutOfBoundsException e) {}
+		
+		if(new_move) {
+			
+			//Check if the move is new, inverted or a repeat
+			if(int_move != same_move[0] && (int_move+2 != same_move[0] && int_move-2 != same_move[0])) { //New move
+				moves.add(int_move);
+				locate_prev_move++;
+				same_move[0] = int_move;
+				same_move[1] = 0;
+			}
+			
+			else if(int_move != same_move[0]) { //Inverted
+				if(same_move[1] == 0) { //Original move was not repeated so remove it altogether
+					moves.remove(moves.size()-1);
+					locate_prev_move--;
+					try {same_move[0] = moves.get(moves.size()-1);}
+					catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
+					same_move[1] = 0;
+				} else { //Original move was repeated so remove the repeat just
+					moves.set(moves.size()-1, moves.get(moves.size()-1)-1);
+				}
+			}
+			
+			else { //Same move
+				moves.set(moves.size()-1, moves.get(moves.size()-1)+1);
+				switch(same_move[1]) {
+				case 0: same_move[1]++; break;
+				case 1: same_move[1]++; break;
+				case 2:
+					moves.remove(moves.size()-1);
+					locate_prev_move--;
+					try {same_move[0] = moves.get(moves.size()-1);}
+					catch(IndexOutOfBoundsException e) {same_move[0] = -1;}
+					same_move[1] = 0;
+					break;
+				default: break;
+				}
+			}
+			
+			for(int i=moves.size()-1;i>locate_prev_move;i++) {
+				moves.remove(i);
+			}
+			
+			String[] string = new String[moves.size()];
+			Color [] color  = new Color [moves.size()];
+			Font     font   = new Font("Arial", Font.BOLD, 12);
+			
+			for(int i=0;i<moves.size();i++) {
+				 string[i] = string_moves[moves.get(i)] + " ";
+				 color [i] = Color.WHITE;
+			}
+			
+			moves_box.setText(string, color, font);	
+			repaint(379, 25, 229, 67);
+			
+		} else { //The user undid a move and has now repeated that move
+			
+			if(int_move == moves.get(locate_prev_move+1)) { //Check if the move made is the same as the previously undid move
+				locate_prev_move++;
+				
+				String[] string = new String[moves.size()];
+				Color [] color  = new Color [moves.size()];
+				Font     font   = new Font("Arial", Font.BOLD, 12);
+				
+				for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.WHITE;
+				}
+				
+				for(int i=locate_prev_move+1;i<moves.size();i++) { //For moves that have been undid
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.GRAY.darker();
+				}
+				
+				moves_box.setText(string, color, font);	
+				repaint(379, 25, 229, 67);
+			}
+			
+			else if(int_move == moves.get(locate_prev_move+1)+1) { //Check if move made is the same but the prev undid move was made twice
+				if(!moves_box.getColor(locate_prev_move+1).equals(Color.WHITE)) { //Check if no part of the double move has been re-made
+					String[] string = new String[moves.size()+1];
+					Color [] color  = new Color [moves.size()+1];
+					Font     font   = new Font("Arial", Font.BOLD, 12);
+					
+					for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+						 string[i] = string_moves[moves.get(i)] + " ";
+						 color [i] = Color.WHITE;
+					}
+					
+					string[locate_prev_move+1] = string_moves[moves.get(locate_prev_move+1)].substring(0, string_moves[moves.get(locate_prev_move+1)].length()-1);
+					color [locate_prev_move+1] = Color.WHITE;
+					
+					string[locate_prev_move+2] = "2";
+					color [locate_prev_move+2] = Color.GRAY.darker();
+					
+					for(int i=locate_prev_move+3;i<moves.size()+1;i++) { //For moves that have been undid
+						 string[i] = string_moves[moves.get(i)] + " ";
+						 color [i] = Color.GRAY.darker();
+					}
+					
+					moves_box.setText(string, color, font);	
+					repaint(379, 25, 229, 67);
+				
+				} else { //The first part of the double move has already been made
+					locate_prev_move++;
+					
+					String[] string = new String[moves.size()];
+					Color [] color  = new Color [moves.size()];
+					Font     font   = new Font("Arial", Font.BOLD, 12);
+					
+					for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+						 string[i] = string_moves[moves.get(i)] + " ";
+						 color [i] = Color.WHITE;
+					}
+					
+					for(int i=locate_prev_move+1;i<moves.size();i++) { //For moves that have been undid
+						 string[i] = string_moves[moves.get(i)] + " ";
+						 color [i] = Color.GRAY.darker();
+					}
+					
+					moves_box.setText(string, color, font);	
+					repaint(379, 25, 229, 67);
+				}
+			}
+			
+			else { //The new move is not the same as the previously made move nor is it part of a double move
+				for(int i=moves.size()-1;i>locate_prev_move;i--) {
+					moves.remove(i);
+				}
+				
+				same_move[0] = -1;
+				same_move[1] = -1;
+				addMove(int_move);
+			}
+			
+		}
 		
 	}
 
@@ -765,6 +912,135 @@ public class RubiksCube extends JPanel {
 		moves        = new ArrayList<Integer>();
 		moves_box.setText(null, null, null);
 		repaint(379, 25, 229, 67);
+		
+	}
+	
+	public void callMove(int move) {
+		switch(move) {
+		
+		case 0 : shiftRotate("F", 1);           break; //F
+		case 2 : shiftRotate("F", 3);           break; //F'
+		                                        
+		case 6 : shiftUp    (3);                break; //R
+		case 8 : shiftDown  (3);                break; //R'
+		                                        
+		case 14: shiftRotate("F", 1);           break; //B
+		case 16: shiftRotate("F", 3);           break; //B'
+		
+		case 20: shiftDown  (1);                break; //L
+		case 22: shiftUp    (1);                break; //L'
+		                                        
+		case 26: shiftRight (1);                break; //U
+		case 28: shiftLeft  (1);                break; //U'
+		                                        
+		case 32: shiftRight (3);                break; //D
+		case 34: shiftLeft  (3);                break; //D'
+		
+		case 38: shiftLeft  (1); shiftLeft (3); break; //U D'
+		case 40: shiftRight (1); shiftRight(3); break; //U' D
+		
+		case 44: shiftDown  (1); shiftDown (3); break; //L R'
+		case 46: shiftUp    (1); shiftUp   (3); break; //L' R
+		
+		default:                                break;
+		
+		}
+	}
+	
+	public void undoMove() {
+		
+		int undo = moves.get(locate_prev_move);
+		String[] string_moves = {"F"   , "F2"    , "F'"  , "F'2"   , /*NOT USED DIRECTLY*/ "F"   , "F2"    ,
+								 "R"   , "R2"    , "R'"  , "R'2"   , /*NOT USED DIRECTLY*/ "R"   , "R2"    ,
+								 "B"   , "B2"    , "B'"  , "B'2"   , /*NOT USED DIRECTLY*/ "B"   , "B2"    ,
+								 "L"   , "L2"    , "L'"  , "L'2"   , /*NOT USED DIRECTLY*/ "L"   , "L2"    ,
+								 "U"   , "U2"    , "U'"  , "U'2"   , /*NOT USED DIRECTLY*/ "U"   , "U2"    ,
+								 "D"   , "D2"    , "D'"  , "D'2"   , /*NOT USED DIRECTLY*/ "D"   , "D2"    ,
+								 "U D'", "U2 D'2", "U' D", "U'2 D2", /*NOT USED DIRECTLY*/ "U D'", "U2 D'2",
+								 "L R'", "L2 R'2", "L' R", "L'2 R2", /*NOT USED DIRECTLY*/ "L R'", "L2 R'2"
+								};
+		
+		user_move = false;
+		goToLayout(last_layout);
+		
+		if(!string_moves[undo].contains("2")) { //Checks if the move recorded was not a double move
+			locate_prev_move--;
+			
+			//Checks if the move is not inverted
+			if(!string_moves[undo].contains("'")) {callMove(undo+2);}
+			else                                  {callMove(undo-2);}
+			
+			String[] string = new String[moves.size()];
+			Color [] color  = new Color [moves.size()];
+			Font     font   = new Font("Arial", Font.BOLD, 12);
+			
+			for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+				 string[i] = string_moves[moves.get(i)] + " ";
+				 color [i] = Color.WHITE;
+			}
+			
+			for(int i=locate_prev_move+1;i<moves.size();i++) { //For moves that have been undid
+				 string[i] = string_moves[moves.get(i)] + " ";
+				 color [i] = Color.GRAY.darker();
+			}
+			
+			moves_box.setText(string, color, font);	
+			repaint();
+		
+		} else { //The move is a double move
+			//Checks if the move is not inverted
+			if(!string_moves[undo].contains("'")) {callMove(undo+2);}
+			else                                  {callMove(undo-2);}
+			
+			if(moves_box.getColor(locate_prev_move).equals(Color.WHITE)) { //Check if no part of the double move has been undid
+				String[] string = new String[moves.size()+1];
+				Color [] color  = new Color [moves.size()+1];
+				Font     font   = new Font("Arial", Font.BOLD, 12);
+				
+				for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.WHITE;
+				}
+				
+				string[locate_prev_move+1] = string_moves[moves.get(locate_prev_move+1)].substring(0, string_moves[moves.get(locate_prev_move+1)].length()-1);
+				color [locate_prev_move+1] = Color.WHITE;
+				
+				string[locate_prev_move+2] = "2";
+				color [locate_prev_move+2] = Color.GRAY.darker();
+				
+				for(int i=locate_prev_move+3;i<moves.size();i++) { //For moves that have been undid
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.GRAY.darker();
+				}
+				
+				moves_box.setText(string, color, font);	
+				repaint();
+				
+			} else { //The second part of the double has been undid
+				locate_prev_move--;
+				
+				String[] string = new String[moves.size()+1];
+				Color [] color  = new Color [moves.size()+1];
+				Font     font   = new Font("Arial", Font.BOLD, 12);
+				
+				for(int i=0;i<locate_prev_move+1;i++) { //For moves that have been made
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.WHITE;
+				}
+				
+				for(int i=locate_prev_move+1;i<moves.size();i++) { //For moves that have been undid
+					 string[i] = string_moves[moves.get(i)] + " ";
+					 color [i] = Color.GRAY.darker();
+				}
+				
+				moves_box.setText(string, color, font);	
+				repaint();
+				
+			}
+			
+			
+		}
+		
 		
 	}
 	
@@ -785,6 +1061,8 @@ public class RubiksCube extends JPanel {
 		case "Ver"      : shiftMainVer(face);     break;
 		default         : break;
 		}
+		
+		last_layout = getCurrentLayout();
 		
 	}
 	
@@ -817,7 +1095,7 @@ public class RubiksCube extends JPanel {
 		
 		if(col == 1) {
 			shiftRotate("L", 3);
-			addMove(20);
+			if(user_move) {addMove(20);}
 		}
 		
 		if(col == 2) {
@@ -828,12 +1106,12 @@ public class RubiksCube extends JPanel {
 				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
 			}
 			
-			addMove(42);
+			if(user_move) {addMove(42);}
 		}
 		
 		if(col == 3) {
 			shiftRotate("R", 1);
-			addMove(6);
+			if(user_move) {addMove(6);}
 		}
 		
 		shiftFlip(col, "D");
@@ -869,7 +1147,7 @@ public class RubiksCube extends JPanel {
 		
 		if(col == 1) {
 			shiftRotate("L", 1);
-			addMove(18);
+			if(user_move) {addMove(18);}
 		}
 		
 		if(col == 2) {
@@ -880,12 +1158,12 @@ public class RubiksCube extends JPanel {
 				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
 			}
 			
-			addMove(44);
+			if(user_move) {addMove(44);}
 		}
 		
 		if(col == 3) {
 			shiftRotate("R", 3);
-			addMove(8);
+			if(user_move) {addMove(8);}
 		}
 		
 		shiftFlip(col, "U");
@@ -916,7 +1194,7 @@ public class RubiksCube extends JPanel {
 		
 		if(row == 1) {
 			shiftRotate("U", 1);
-			addMove(24);
+			if(user_move) {addMove(24);}
 		}
 		
 		if(row == 2) {
@@ -927,12 +1205,12 @@ public class RubiksCube extends JPanel {
 				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
 			}
 			
-			addMove(38);
+			if(user_move) {addMove(38);}
 		}
 		
 		if(row == 3) {
 			shiftRotate("D", 3);
-			addMove(32);
+			if(user_move) {addMove(32);}
 		}
 		
 	}
@@ -961,7 +1239,7 @@ public class RubiksCube extends JPanel {
 		
 		if(row == 1) {
 			shiftRotate("U", 3);
-			addMove(26);
+			if(user_move) {addMove(26);}
 		}
 		
 		if(row == 2) {
@@ -972,12 +1250,12 @@ public class RubiksCube extends JPanel {
 				rubiks.setText(faces[i]+":2:2", faces[layout[i]]);
 			}
 			
-			addMove(36);
+			if(user_move) {addMove(36);}
 		}
 		
 		if(row == 3) {
 			shiftRotate("D", 1);
-			addMove(30);
+			if(user_move) {addMove(30);}
 		}
 		
 	}
@@ -1028,7 +1306,7 @@ public class RubiksCube extends JPanel {
 			for(int i=0;i<3;i++) {rubiks.setColor("U:3:"+String.valueOf(i+1), color[11-i]);}    //Up face
 			
 			count++;
-			addMove(getCurrentLayout()[0]*6);
+			if(user_move) {addMove(getCurrentLayout()[0]*6);}
 				
 		}
 		
@@ -1041,25 +1319,25 @@ public class RubiksCube extends JPanel {
 		if(face.equals("R")) {
 			
 			shiftLeft(1);
-			addMove(26); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(26);} //Cancel out moves as just a view rotation
 			
 			shiftLeft(2);
-			addMove(36); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(36);} //Cancel out moves as just a view rotation
 			
 			shiftLeft(3);
-			addMove(30); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(30);} //Cancel out moves as just a view rotation
 			
 			
 		} else {
 			
 			shiftRight(1);
-			addMove(24); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(24);} //Cancel out moves as just a view rotation
 			
 			shiftRight(2);
-			addMove(38); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(38);} //Cancel out moves as just a view rotation
 			
 			shiftRight(3);
-			addMove(32); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(32);} //Cancel out moves as just a view rotation
 			
 		}
 		
@@ -1072,24 +1350,24 @@ public class RubiksCube extends JPanel {
 		if(face.equals("D")) {
 			
 			shiftUp(1);
-			addMove(18); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(18);} //Cancel out moves as just a view rotation
 			
 			shiftUp(2);
-			addMove(44); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(44);} //Cancel out moves as just a view rotation
 			
 			shiftUp(3);
-			addMove(8); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(8);} //Cancel out moves as just a view rotation
 			
 		} else {
 			
 			shiftDown(1);
-			addMove(20); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(20);} //Cancel out moves as just a view rotation
 			
 			shiftDown(2);
-			addMove(42); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(42);} //Cancel out moves as just a view rotation
 			
 			shiftDown(3);
-			addMove(6); //Cancel out moves as just a view rotation
+			if(user_move) {addMove(6);} //Cancel out moves as just a view rotation
 			
 		}
 		

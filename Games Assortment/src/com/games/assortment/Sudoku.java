@@ -323,7 +323,7 @@ public class Sudoku extends JPanel {
 		g.fillRect(25, 346, 326, 5); //Bottom line
 		g.fillRect(25, 25, 5, 326);   //Left line
 		
-		//Main vertical lines		
+		//Main vertical lines
 		g.fillRect(132, 30, 5, 316); //First line
 		g.fillRect(239, 30, 5, 316); //Second line
 		
@@ -331,7 +331,7 @@ public class Sudoku extends JPanel {
 		g.fillRect(30, 132, 316, 5); //First line
 		g.fillRect(30, 239, 316, 5); //Second line
 		
-		//Sub vertical lines	
+		//Sub vertical lines
 		g.fillRect(62, 30, 3, 316);  //First line
 		g.fillRect(97, 30, 3, 316);  //Second line
 		g.fillRect(169, 30, 3, 316); //Third line
