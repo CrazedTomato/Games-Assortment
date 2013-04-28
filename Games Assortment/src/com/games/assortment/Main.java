@@ -2,6 +2,8 @@ package com.games.assortment;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -15,7 +17,7 @@ public class Main {
 										 "New Game"  , "New Game"      , "New Game"         , "New Game",
 										 "New Game"  , "New Game"      , "New Game"         , "New Game"};
 	
-	private static JPanel[] classes   = {new Sudoku(), new RubiksCube(), new SpaceInvaders()};
+	private static JPanel game_class;
 
 	private static int [][] dims      = { {382, 489} , {639, 534}      , {800, 600}                 };
 	
@@ -82,6 +84,15 @@ public class Main {
 	
 	public static void showGame(int game_no) {
 		
+		switch(game_no) {
+		
+		case 0: game_class = new Sudoku();        break;
+		case 1: game_class = new RubiksCube();    break;
+		case 2: game_class = new SpaceInvaders(); break;
+		default: System.out.println("Unknown Game");
+		
+		}
+		
 		if(game == null || !game.isVisible()) {
 			game = new CFrame(game_type[game_no]);
 			game.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -89,7 +100,7 @@ public class Main {
 			game.setVisible(true);
 			game.setSize(dims[game_no][0], dims[game_no][1]);
 			game.centerInScreen();
-			game.add(classes[game_no]);
+			game.add(game_class);
 			
 		} else {
 			game.setVisible(true);

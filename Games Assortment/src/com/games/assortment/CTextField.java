@@ -41,7 +41,7 @@ public class CTextField extends JPanel {
 	public Color [] getColorArray() {return color;}
 	public Font     getFont()       {return font;}
 	
-	
+	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
